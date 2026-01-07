@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: exam-platform-backend
+    env: python
+    buildCommand: cd backend && pip install -r requirements.txt
+    startCommand: cd backend && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+    healthCheckPath: /
+
+databases:
+  - name: exam-platform-db
+    databaseName: exam_db
+    user: exam_user
+
