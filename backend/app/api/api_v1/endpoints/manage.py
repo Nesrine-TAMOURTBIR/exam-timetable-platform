@@ -4,7 +4,7 @@ CRUD operations for departments, programs, modules, rooms, users, exams
 """
 from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Body
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from sqlalchemy.orm import selectinload
 from app.api import deps
 from app.models.all_models import (
@@ -193,7 +193,8 @@ async def delete_room(
     room = await db.get(Room, room_id)
     if not room:
         raise HTTPException(status_code=404, detail="Room not found")
-    await db.delete(room)
+    stmt = delete(Room).where(Room.id == room_id)
+    await db.execute(stmt)
     await db.commit()
     return {"message": "Room deleted"}
 
