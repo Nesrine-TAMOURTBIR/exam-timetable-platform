@@ -1,4 +1,11 @@
 import asyncio
+import sys
+import platform
+
+# Fix for Windows: Use SelectorEventLoop instead of ProactorEventLoop
+if platform.system() == 'Windows':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 import random
 from faker import Faker
 from sqlalchemy import select
@@ -27,16 +34,26 @@ async def seed_data():
         print("Creating Users & Professors...")
         profs = []
         prof_users = []
-        for _ in range(NUM_PROFS):
+        import time
+        fake.unique.clear()  # Clear unique cache to avoid conflicts
+        for i in range(NUM_PROFS):
             u = User(
-                email=fake.unique.email(),
+                email=f"prof_{i}_{int(time.time())}_{random.randint(1000,9999)}@{fake.domain_name()}",
                 hashed_password="hashed_secret",
                 full_name=fake.name(),
                 role=UserRole.PROFESSOR.value
             )
             prof_users.append(u)
-        session.add_all(prof_users)
-        await session.commit()
+        try:
+            session.add_all(prof_users)
+            await session.commit()
+        except Exception as e:
+            await session.rollback()
+            print(f"Error creating professors: {e}")
+            # Try to get existing users
+            result = await session.execute(select(User).where(User.role == UserRole.PROFESSOR.value))
+            prof_users = result.scalars().all()
+            print(f"Using {len(prof_users)} existing professors")
         for u in prof_users: await session.refresh(u)
 
         for i, u in enumerate(prof_users):
@@ -50,14 +67,30 @@ async def seed_data():
         for p in profs: await session.refresh(p)
         
         print("Creating Programs...")
-        programs = []
-        for _ in range(NUM_PROGRAMS):
-            programs.append(Program(
-                name=f"{fake.unique.job()} Studies",
-                department_id=random.choice(depts).id
-            ))
-        session.add_all(programs)
-        await session.commit()
+        # Check existing programs first
+        result = await session.execute(select(Program))
+        existing_programs = result.scalars().all()
+        
+        if len(existing_programs) >= NUM_PROGRAMS:
+            print(f"Using {len(existing_programs)} existing programs")
+            programs = existing_programs[:NUM_PROGRAMS]
+        else:
+            programs = list(existing_programs)
+            fake.unique.clear()
+            import time
+            for i in range(len(programs), NUM_PROGRAMS):
+                programs.append(Program(
+                    name=f"Program_{i}_{int(time.time())}_{random.randint(1000,9999)}",
+                    department_id=random.choice(depts).id
+                ))
+            try:
+                session.add_all(programs[len(existing_programs):])
+                await session.commit()
+            except Exception as e:
+                await session.rollback()
+                print(f"Some programs already exist, using existing ones")
+                result = await session.execute(select(Program))
+                programs = result.scalars().all()[:NUM_PROGRAMS]
         for p in programs: await session.refresh(p)
 
         print("Creating Modules & Exams...")
@@ -108,16 +141,23 @@ async def seed_data():
             current_batch_size = min(BATCH_SIZE, NUM_STUDENTS - batch_start)
             
             # 1. Create Users
-            batch_users = [
-                 User(
-                    email=fake.unique.email(),
+            import time
+            batch_users = []
+            for i in range(current_batch_size):
+                u = User(
+                    email=f"student_{batch_start + i}_{int(time.time())}_{random.randint(10000,99999)}@{fake.domain_name()}",
                     hashed_password="hashed_secret",
                     full_name=fake.name(),
                     role=UserRole.STUDENT.value
-                ) for _ in range(current_batch_size)
-            ]
-            session.add_all(batch_users)
-            await session.commit()
+                )
+                batch_users.append(u)
+            try:
+                session.add_all(batch_users)
+                await session.commit()
+            except Exception as e:
+                await session.rollback()
+                print(f"Error in batch {batch_start}: {e}")
+                continue
             for u in batch_users: await session.refresh(u)
             
             # 2. Create Students

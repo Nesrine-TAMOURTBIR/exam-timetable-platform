@@ -1,4 +1,11 @@
 import asyncio
+import sys
+import platform
+
+# Fix for Windows: Use SelectorEventLoop instead of ProactorEventLoop
+if platform.system() == 'Windows':
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
+
 from app.db.session import AsyncSessionLocal
 from app.models.all_models import User, UserRole
 from app.core import security

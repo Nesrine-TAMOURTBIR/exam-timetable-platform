@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Statistic, Button, message, Alert, Progress } from 'antd';
-import { RocketOutlined, CheckCircleOutlined, UserOutlined, BookOutlined, CalendarOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Statistic, Button, message, Alert } from 'antd';
+import { RocketOutlined, CheckCircleOutlined, UserOutlined, BookOutlined } from '@ant-design/icons';
 import api from '../api/client';
 import TimetableView from './TimetableView';
 

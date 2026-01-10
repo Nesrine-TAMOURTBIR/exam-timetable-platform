@@ -5,7 +5,7 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy import select
 from app.api import deps
 from app.core import security
-from app.models.all_models import User
+from app.models.all_models import User, UserRole
 from app.schemas.all_schemas import Token
 
 router = APIRouter()
@@ -70,3 +70,28 @@ async def read_users_me(current_user: User = Depends(deps.get_current_user)):
         "role": current_user.role,
         "id": current_user.id
     }
+
+@router.post("/setup/create-admin")
+async def create_admin_endpoint(db = Depends(deps.get_db)):
+    """
+    TEMPORARY: Create admin user if it doesn't exist
+    REMOVE THIS ENDPOINT AFTER CREATING ADMIN IN PRODUCTION!
+    """
+    # Check if admin exists
+    result = await db.execute(select(User).where(User.email == "admin@example.com"))
+    existing_admin = result.scalars().first()
+    
+    if existing_admin:
+        return {"message": "Admin user already exists", "email": "admin@example.com"}
+    
+    # Create admin
+    admin_user = User(
+        email="admin@example.com",
+        hashed_password="hashed_secret",
+        full_name="System Administrator",
+        role=UserRole.ADMIN.value,
+        is_active=True
+    )
+    db.add(admin_user)
+    await db.commit()
+    return {"message": "Admin user created successfully", "email": "admin@example.com", "password": "secret"}
