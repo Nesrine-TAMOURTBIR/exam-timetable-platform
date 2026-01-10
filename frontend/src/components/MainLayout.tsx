@@ -29,10 +29,11 @@ const MainLayout: React.FC = () => {
         <Layout style={{ minHeight: '100vh' }}>
             <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
                 <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', borderRadius: 6 }} />
-                <Menu theme="dark" mode="inline" defaultSelectedKeys={[location.pathname]} items={[
+                <Menu theme="dark" mode="inline" selectedKeys={[location.pathname]} items={[
                     { key: '/', icon: <DashboardOutlined />, label: 'Dashboard', onClick: () => navigate('/') },
                     { key: '/timetable', icon: <CalendarOutlined />, label: 'Timetable', onClick: () => navigate('/timetable') },
-                    { key: '/settings', icon: <SettingOutlined />, label: 'Settings', onClick: () => navigate('/settings') },
+                    { key: '/manage/departments', icon: <SettingOutlined />, label: 'Departments', onClick: () => navigate('/manage/departments') },
+                    { key: '/manage/rooms', icon: <SettingOutlined />, label: 'Rooms', onClick: () => navigate('/manage/rooms') },
                 ]} />
             </Sider>
             <Layout className="site-layout">
