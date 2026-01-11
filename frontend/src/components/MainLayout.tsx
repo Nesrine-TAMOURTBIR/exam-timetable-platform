@@ -34,6 +34,10 @@ const MainLayout: React.FC = () => {
                     { key: '/timetable', icon: <CalendarOutlined />, label: 'Timetable', onClick: () => navigate('/timetable') },
                     { key: '/manage/departments', icon: <SettingOutlined />, label: 'Departments', onClick: () => navigate('/manage/departments') },
                     { key: '/manage/rooms', icon: <SettingOutlined />, label: 'Rooms', onClick: () => navigate('/manage/rooms') },
+                    { key: '/manage/programs', icon: <SettingOutlined />, label: 'Programs', onClick: () => navigate('/manage/programs') },
+                    { key: '/manage/modules', icon: <SettingOutlined />, label: 'Modules', onClick: () => navigate('/manage/modules') },
+                    { key: '/manage/users', icon: <SettingOutlined />, label: 'Users', onClick: () => navigate('/manage/users') },
+                    { key: '/manage/exams', icon: <SettingOutlined />, label: 'Exams', onClick: () => navigate('/manage/exams') },
                 ]} />
             </Sider>
             <Layout className="site-layout">

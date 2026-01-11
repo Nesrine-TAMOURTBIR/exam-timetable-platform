@@ -103,6 +103,8 @@ class OptimizationEngine:
         prof_usage = {} 
         # (day, prof_id) -> count
         prof_daily_counts = {} 
+        # prof_id -> total_count across all days
+        prof_total_counts = {p.id: 0 for p in self.profs}
         
         unassigned = []
         
@@ -140,7 +142,7 @@ class OptimizationEngine:
                 # 3. Try to find a supervisor
                 valid_prof = None
                 
-                # Heuristic: Sort profs to prefer own department
+                # Heuristic: Sort profs to prefer own department and then minimum total count
                 exam_dept_id = exam.module.program.department_id if exam.module and exam.module.program else -1
                 
                 # Filter valid profs first to avoid sorting everyone
@@ -151,8 +153,13 @@ class OptimizationEngine:
                     if (day, slot, prof.id) in prof_usage: continue
                     candidates.append(prof)
                 
-                # Sort: First those in same dept, then others
-                candidates.sort(key=lambda p: 0 if p.department_id == exam_dept_id else 1)
+                # Sort: 
+                # 1. First those in same dept
+                # 2. Then those with minimum total supervisions (for equality)
+                candidates.sort(key=lambda p: (
+                    0 if p.department_id == exam_dept_id else 1,
+                    prof_total_counts.get(p.id, 0)
+                ))
                 
                 if candidates:
                     valid_prof = candidates[0]
@@ -163,6 +170,7 @@ class OptimizationEngine:
                     room_usage[(day, slot, valid_room.id)] = exam.id
                     prof_usage[(day, slot, valid_prof.id)] = exam.id
                     prof_daily_counts[(day, valid_prof.id)] = prof_daily_counts.get((day, valid_prof.id), 0) + 1
+                    prof_total_counts[valid_prof.id] += 1
                     assigned = True
                     break
             

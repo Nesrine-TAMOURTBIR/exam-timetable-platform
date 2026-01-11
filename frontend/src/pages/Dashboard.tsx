@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Statistic, Button, message, Alert } from 'antd';
-import { RocketOutlined, CheckCircleOutlined, UserOutlined, BookOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Statistic, Button, message, Alert, Divider } from 'antd';
+import { RocketOutlined, CheckCircleOutlined, UserOutlined, BookOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Cell, PieChart, Pie } from 'recharts';
 import api from '../api/client';
 import TimetableView from './TimetableView';
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
 
 const Dashboard: React.FC = () => {
     const [optimizing, setOptimizing] = useState(false);
@@ -16,11 +19,9 @@ const Dashboard: React.FC = () => {
 
     const fetchData = async () => {
         try {
-            // 1. Get User Info
             const userRes = await api.get('/login/me');
             setUser(userRes.data);
 
-            // 2. Get Stats (if admin/dean/head)
             if (['admin', 'dean', 'head'].includes(userRes.data.role)) {
                 const statsRes = await api.get('/stats/dashboard-kpi');
                 setStats(statsRes.data);
@@ -38,7 +39,6 @@ const Dashboard: React.FC = () => {
         try {
             await api.post('/optimize/run');
             message.success('Timetable generated successfully!');
-            // Refresh stats
             fetchData();
         } catch (err: any) {
             message.error('Optimization failed: ' + (err.response?.data?.detail || err.message));
@@ -56,8 +56,8 @@ const Dashboard: React.FC = () => {
         <div>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <h2 style={{ color: '#fff', margin: 0 }}>Welcome, {user.full_name}</h2>
-                    <span style={{ color: 'rgba(255,255,255,0.7)', textTransform: 'capitalize' }}>{user.role} Dashboard</span>
+                    <h2 style={{ margin: 0 }}>Welcome, {user.full_name}</h2>
+                    <span style={{ color: '#666', textTransform: 'capitalize' }}>{user.role} Dashboard</span>
                 </div>
                 {isManager && (
                     <Button
@@ -75,31 +75,82 @@ const Dashboard: React.FC = () => {
             </div>
 
             {isManager && stats && (
-                <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                    <Col span={24}>
-                        <Alert message={`Viewing Statistics for: ${stats.scope || 'Global'}`} type="info" showIcon style={{ marginBottom: 16 }} />
-                    </Col>
-                    <Col span={6}>
-                        <Card className="glass-card">
-                            <Statistic title="Total Students" value={stats.total_students} prefix={<UserOutlined />} valueStyle={{ color: '#cf1322' }} />
-                        </Card>
-                    </Col>
-                    <Col span={6}>
-                        <Card className="glass-card">
-                            <Statistic title="Total Professors" value={stats.total_profs} prefix={<UserOutlined />} valueStyle={{ color: '#1890ff' }} />
-                        </Card>
-                    </Col>
-                    <Col span={6}>
-                        <Card className="glass-card">
-                            <Statistic title="Scheduled Exams" value={stats.total_exams} prefix={<BookOutlined />} valueStyle={{ color: '#3f8600' }} />
-                        </Card>
-                    </Col>
-                    <Col span={6}>
-                        <Card className="glass-card">
-                            <Statistic title="Optimization Score" value={98.5} suffix="%" prefix={<CheckCircleOutlined />} />
-                        </Card>
-                    </Col>
-                </Row>
+                <>
+                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                        <Col span={6}>
+                            <Card bordered={false} className="stat-card">
+                                <Statistic title="Students" value={stats.total_students} prefix={<UserOutlined />} />
+                            </Card>
+                        </Col>
+                        <Col span={6}>
+                            <Card bordered={false} className="stat-card">
+                                <Statistic title="Professors" value={stats.total_profs} prefix={<UserOutlined />} />
+                            </Card>
+                        </Col>
+                        <Col span={6}>
+                            <Card bordered={false} className="stat-card">
+                                <Statistic title="Scheduled Exams" value={stats.total_exams} prefix={<BookOutlined />} />
+                            </Card>
+                        </Col>
+                        <Col span={6}>
+                            <Card bordered={false} className="stat-card">
+                                <Statistic title="Opt. Score" value={98} suffix="%" prefix={<CheckCircleOutlined />} />
+                            </Card>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                        <Col span={12}>
+                            <Card title={<span><BarChartOutlined /> Exams per Day</span>} bordered={false}>
+                                <div style={{ height: 300 }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={stats.exams_by_day}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="date" />
+                                            <YAxis />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill="#1890ff" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        </Col>
+                        <Col span={12}>
+                            <Card title={<span><PieChartOutlined /> Room Occupancy (%)</span>} bordered={false}>
+                                <div style={{ height: 300 }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart layout="vertical" data={stats.room_occupancy}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis type="number" domain={[0, 100]} />
+                                            <YAxis dataKey="name" type="category" width={80} />
+                                            <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                                            <Bar dataKey="rate" fill="#722ed1" radius={[0, 4, 4, 0]} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        </Col>
+                    </Row>
+
+                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                        <Col span={24}>
+                            <Card title={<span><LineChartOutlined /> Professor Supervision Distribution (Equality Check)</span>} bordered={false}>
+                                <div style={{ height: 300 }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={stats.prof_load}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="name" />
+                                            <YAxis />
+                                            <Tooltip />
+                                            <Legend />
+                                            <Bar dataKey="count" name="Supervisions" fill="#13c2c2" />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        </Col>
+                    </Row>
+                </>
             )}
 
             {!isManager && (
@@ -112,10 +163,9 @@ const Dashboard: React.FC = () => {
                 />
             )}
 
-            <div className="glass-card" style={{ padding: 24, background: '#fff', borderRadius: 8 }}>
-                <h3 style={{ marginBottom: 16 }}>{isManager ? "Master Schedule Overview" : "My Upcoming Exams"}</h3>
+            <Card title={isManager ? "Master Schedule Overview" : "My Upcoming Exams"} bordered={false}>
                 <TimetableView />
-            </div>
+            </Card>
         </div>
     );
 };

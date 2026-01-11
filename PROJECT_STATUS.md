@@ -1,6 +1,6 @@
 # 📊 État d'Avancement du Projet - Exam Timetable Platform
 
-## ✅ Ce qui est FAIT (70% complété)
+## ✅ Ce qui est FAIT (75% complété)
 
 ### Backend (Python/FastAPI) ✅
 - ✅ **Base de données PostgreSQL** : Toutes les tables principales implémentées
@@ -42,162 +42,72 @@
 - ✅ **Déploiement** : Déployé sur Firebase Hosting
 
 ### Infrastructure ✅
-- ✅ Backend déployé sur Render
+- ✅ Backend déployé sur Render (Fixé : asyncpg + PYTHONPATH)
 - ✅ Frontend déployé sur Firebase
 - ✅ Base de données PostgreSQL sur Render
 - ✅ CORS configuré
 
 ---
 
-## ⚠️ Ce qui MANQUE ou est INCOMPLET (30% restant)
+## ⚠️ Ce qui MANQUE ou est INCOMPLET (25% restant)
 
 ### Backend à compléter ⚠️
 1. **Endpoints de gestion** :
-   - ❌ CRUD pour départements (Admin/Head)
-   - ❌ CRUD pour programmes (Admin/Head)
-   - ❌ CRUD pour modules (Admin/Head)
-   - ❌ CRUD pour salles (Admin)
-   - ❌ CRUD pour utilisateurs (Admin)
-   - ❌ CRUD pour examens (Admin/Head)
+   - ✅ CRUD pour départements (Admin/Head)
+   - ❌ CRUD pour programmes (Admin/Head) - *À faire*
+   - ❌ CRUD pour modules (Admin/Head) - *À faire*
+   - ✅ CRUD pour salles (Admin)
+   - ❌ CRUD pour utilisateurs (Admin) - *À faire*
+   - ❌ CRUD pour examens (Admin/Head) - *À faire*
 
-2. **Amélioration de l'algorithme** :
-   - ⚠️ Assurer égalité des supervisions (tous les profs ont le même nombre)
+2. **Amélioration de l'algorithme (CRITIQUE)** :
+   - ❌ **Égalité des supervisions** : Assurer que tous les profs ont le même nombre de surveillances (Spécification originale).
    - ✅ Déjà fait : Contraintes hard (max 1/jour étudiant, max 3/jour prof, capacité)
 
-3. **Scripts SQL** :
-   - ❌ Scripts SQL pour export/rapport technique
-   - ❌ Queries SQL documentées pour le rapport
-
-4. **Performance** :
-   - ⚠️ Indexes partiels mentionnés dans les specs mais pas implémentés
-   - ⚠️ Stored procedures PL/pgSQL mentionnées mais pas créées
+3. **Base de Données & SQL** :
+   - ❌ **Scripts SQL complets** : Export SQL standalone (Création + Requêtes Dashboard) pour le rapport.
+   - ❌ **Procédures PL/pgSQL** : Ajouter plus de logique métier via procédures (comme spécifié).
+   - ❌ **Index partiels** : Implémenter des index partiels pour l'optimisation.
 
 ### Frontend à compléter ⚠️
-1. **Pages manquantes** :
-   - ❌ Page de gestion des départements
-   - ❌ Page de gestion des programmes
-   - ❌ Page de gestion des modules
-   - ❌ Page de gestion des salles
-   - ❌ Page de gestion des utilisateurs
-   - ❌ Page de gestion des examens
-   - ❌ Page de statistiques avancées avec graphiques
+1. **Pages de gestion** :
+   - ❌ Gestion des programmes, modules, utilisateurs, examens.
 
-2. **Améliorations** :
-   - ⚠️ Filtres avancés pour TimetableView (date, département, programme)
-   - ⚠️ Export PDF/Excel des horaires
-   - ⚠️ Graphiques de statistiques (Recharts installé mais non utilisé)
+2. **Statistiques Avancées** :
+   - ❌ Graphiques avec Recharts (Occupation, Charge profs, Conflits).
 
 ### Documentation & Livrables ⚠️
 1. **Rapport technique** :
-   - ❌ Rapport PDF 10-15 pages à rédiger
-   - ❌ Scripts SQL complets à documenter
-   - ❌ Benchmarks de performance à créer
-
-2. **Vidéo YouTube** :
-   - ❌ Vidéo 5-10 minutes à créer
-
----
-
-## 📋 Par rapport aux spécifications du projet
-
-### Tables principales ✅
-| Spécification | Implémenté | Notes |
-|--------------|------------|-------|
-| départements | ✅ | `departments` |
-| formations | ✅ | `programs` |
-| étudiants | ✅ | `students` + `users` |
-| modules | ✅ | `modules` |
-| lieu_examen | ✅ | `rooms` |
-| professeurs | ✅ | `professors` + `users` |
-| inscriptions | ✅ | `enrollments` |
-| examens | ✅ | `exams` + `timetable_entries` |
-
-### Contraintes critiques ✅/⚠️
-| Contrainte | Statut | Notes |
-|-----------|--------|-------|
-| Max 1 exam/jour étudiant | ✅ | Implémenté dans `engine.py` |
-| Max 3 exams/jour prof | ✅ | Implémenté dans `engine.py` |
-| Respect capacité salles | ✅ | Implémenté dans `engine.py` |
-| Priorité département | ✅ | Heuristique implémentée |
-| Égalité supervisions | ⚠️ | Partiellement (à améliorer) |
-
-### Technologies ✅/⚠️
-| Technologie | Spécifié | Utilisé | Notes |
-|------------|----------|---------|-------|
-| SGBD | PostgreSQL | ✅ PostgreSQL | Conforme |
-| Backend | Python | ✅ FastAPI (Python) | Conforme |
-| Frontend | Streamlit + Bootstrap | ⚠️ React + Ant Design | **Dévié** - mais plus moderne |
-| Optimisation | PL/pgSQL + indexes | ⚠️ Python (engine.py) | **Dévié** - mais fonctionnel |
-
-### Livrables obligatoires ✅/❌
-| Livrable | Statut | Notes |
-|----------|--------|-------|
-| Scripts SQL complets | ⚠️ | Migrations Alembic existent, besoin de SQL docs |
-| Dataset réaliste | ✅ | `seed_data.py` crée 13000 étudiants, 500 profs, etc. |
-| Prototype fonctionnel | ✅ | Génération d'horaires fonctionne |
-| Rapport technique | ❌ | À rédiger |
-| Benchmarks performance | ❌ | À créer |
+   - ❌ Rapport PDF 10-15 pages (Architecture, MCD, Algos, Benchmarks).
+2. **Benchmarks** :
+   - ❌ Rapport de performance (Temps d'exécution des requêtes SQL).
+3. **Vidéo YouTube** :
+   - ❌ Démonstration de 5-10 minutes.
 
 ---
 
-## 🎯 Plan d'action pour compléter (par priorité)
+## 📋 Vérification par rapport aux images (Spécifications)
 
-### Phase 1 : Fonctionnalités essentielles (2-3 jours)
-1. ✅ Créer tous les utilisateurs de démonstration
-2. ⚠️ Créer endpoints CRUD pour gestion (départements, programmes, modules, salles)
-3. ⚠️ Créer pages frontend de gestion
-4. ⚠️ Améliorer TimetableView avec filtres
-
-### Phase 2 : Améliorations (1-2 jours)
-1. ⚠️ Améliorer algorithme pour égalité des supervisions
-2. ⚠️ Créer page statistiques avec graphiques
-3. ⚠️ Ajouter export PDF/Excel
-
-### Phase 3 : Documentation (1 jour)
-1. ❌ Rédiger rapport technique
-2. ❌ Créer scripts SQL documentés
-3. ❌ Créer benchmarks
-4. ❌ Enregistrer vidéo YouTube
+| Exigence | Statut | Note |
+|----------|--------|------|
+| Tables principales | ✅ | Toutes les 8 tables sont modélisées |
+| Max 1 exam/jour étudiant | ✅ | Implémenté |
+| Max 3 exams/jour prof | ✅ | Implémenté |
+| Capacité salles | ✅ | Implémenté |
+| Égalité supervisions | ❌ | **À implémenter** |
+| PL/pgSQL & Index | ⚠️ | Partiel, besoin d'index partiels |
+| Scripts SQL complets | ❌ | À générer |
+| Hébergement en ligne | ✅ | Render + Firebase OK |
 
 ---
 
-## 📈 Progression globale
+## 🎯 Prochaines Actions Prioritaires
 
-**70% complété** - Le projet est fonctionnel mais manque :
-- Les interfaces de gestion complètes
-- La documentation technique
-- Quelques améliorations de l'algorithme
-
-**Temps estimé pour compléter** : 4-6 jours de travail
+1. **Export SQL** : Générer le script SQL complet.
+2. **Égalité des supervisions** : Mettre à jour `engine.py`.
+3. **Gestion Frontend** : Finaliser les pages de gestion.
+4. **Statistiques** : Ajouter les graphiques.
 
 ---
 
-## 🚀 Pour tester maintenant
-
-1. **Créer les utilisateurs de démonstration** :
-   ```bash
-   cd backend
-   python create_demo_users.py
-   ```
-
-2. **Seeder les données** (si pas déjà fait) :
-   ```bash
-   python seed_data.py
-   ```
-
-3. **Créer l'admin via API** (si pas déjà fait) :
-   ```bash
-   curl -X POST https://exam-timetable-platform.onrender.com/api/v1/setup/create-admin
-   ```
-
-4. **Tester les connexions** :
-   - Admin: `admin@example.com` / `secret`
-   - Dean: `dean@example.com` / `secret`
-   - Head: `head@example.com` / `secret`
-   - Prof: `prof@example.com` / `secret`
-   - Student: `student@example.com` / `secret`
-
----
-
-*Dernière mise à jour : Jan 2025*
-
+*Dernière mise à jour : 11 Janvier 2026*

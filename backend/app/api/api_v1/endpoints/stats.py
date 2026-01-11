@@ -75,7 +75,47 @@ async def get_dashboard_kpi(
             stats["total_exams"] = exam_count.scalar()
             
             stats["scope"] = "Department"
-    else:
-        stats["scope"] = "University"
+    # --- Detailed Statistics for Charts ---
+
+    # 1. Exams by Day (Timeline)
+    # Group by date part of start_time
+    day_stats_query = (
+        select(func.date(TimetableEntry.start_time).label("date"), func.count(TimetableEntry.id).label("count"))
+        .group_by(func.date(TimetableEntry.start_time))
+        .order_by(func.date(TimetableEntry.start_time))
+    )
+    day_res = await db.execute(day_stats_query)
+    stats["exams_by_day"] = [{"date": str(row.date), "count": row.count} for row in day_res.all()]
+
+    # 2. Room Occupancy (using the new PL/pgSQL function or direct query)
+    # Let's use a direct query for robustness in case function isn't yet in DB during dev
+    occupancy_query = """
+        SELECT 
+            r.name,
+            AVG(CAST(en_counts.cnt AS NUMERIC) / r.capacity * 100) as avg_rate
+        FROM rooms r
+        JOIN timetable_entries t ON r.id = t.room_id
+        JOIN exams e ON t.exam_id = e.id
+        JOIN (SELECT module_id, COUNT(*) as cnt FROM enrollments GROUP BY module_id) en_counts ON e.module_id = en_counts.module_id
+        GROUP BY r.name
+        LIMIT 10;
+    """
+    occ_res = await db.execute(sa.text(occupancy_query))
+    stats["room_occupancy"] = [{"name": row[0], "rate": float(row[1])} for row in occ_res.fetchall()]
+
+    # 3. Professor Load (Equality of Supervisions)
+    prof_load_query = """
+        SELECT 
+            u.full_name,
+            COUNT(t.id) as count
+        FROM professors p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN timetable_entries t ON p.id = t.supervisor_id
+        GROUP BY u.full_name
+        ORDER BY count DESC
+        LIMIT 10;
+    """
+    load_res = await db.execute(sa.text(prof_load_query))
+    stats["prof_load"] = [{"name": row[0], "count": row[1]} for row in load_res.fetchall()]
 
     return stats
