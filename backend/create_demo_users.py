@@ -58,6 +58,24 @@ async def create_demo_users():
             print("✓ Dean already exists: dean@example.com / secret")
         credentials_list.append(("Dean", "dean@example.com", "secret"))
         
+        # 2b. Vice-Dean
+        result = await session.execute(select(User).where(User.email == "vicedean@example.com"))
+        vicedean = result.scalars().first()
+        if not vicedean:
+            vicedean = User(
+                email="vicedean@example.com",
+                hashed_password="hashed_secret",
+                full_name="Dr. Sarah Vice-Dean",
+                role=UserRole.VICE_DEAN.value,
+                is_active=True
+            )
+            session.add(vicedean)
+            await session.commit()
+            print("✓ Vice-Dean created: vicedean@example.com / secret")
+        else:
+            print("✓ Vice-Dean already exists: vicedean@example.com / secret")
+        credentials_list.append(("Vice-Dean", "vicedean@example.com", "secret"))
+        
         # 3. Head of Department
         result = await session.execute(select(User).where(User.email == "head@example.com"))
         head = result.scalars().first()

@@ -204,9 +204,11 @@ async def delete_room(
 async def list_users(
     db = Depends(deps.get_db),
     role: Optional[str] = None,
-    current_user: User = Depends(deps.get_current_active_superuser),
+    current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """List users, optionally filtered by role (Admin only)"""
+    """List users, optionally filtered by role (Admin and Deans)"""
+    if current_user.role not in ['admin', 'dean', 'vice_dean']:
+        raise HTTPException(status_code=403, detail="Not authorized")
     query = select(User)
     if role:
         query = query.where(User.role == role)
@@ -228,9 +230,11 @@ async def list_users(
 async def create_user(
     data: UserCreate,
     db = Depends(deps.get_db),
-    current_user: User = Depends(deps.get_current_active_superuser),
+    current_user: User = Depends(deps.get_current_user),
 ) -> Any:
-    """Create a user (Admin only)"""
+    """Create a user (Admin and Deans)"""
+    if current_user.role not in ['admin', 'dean', 'vice_dean']:
+        raise HTTPException(status_code=403, detail="Not authorized")
     # Check if email exists
     result = await db.execute(select(User).where(User.email == data.email))
     existing = result.scalars().first()
@@ -238,8 +242,12 @@ async def create_user(
         raise HTTPException(status_code=400, detail="Email already exists")
     
     # Validate role
-    if data.role not in ['admin', 'dean', 'head', 'professor', 'student']:
+    if data.role not in ['admin', 'dean', 'vice_dean', 'head', 'professor', 'student']:
         raise HTTPException(status_code=400, detail="Invalid role")
+    
+    # Audio requirement: Dean can add dean or admin. 
+    # If the creator is a dean/vice_dean, they might be restricted to certain roles?
+    # The audio says "add another doyen or another administrator".
     
     user = User(
         email=data.email,

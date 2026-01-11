@@ -13,6 +13,8 @@ async def read_timetable(
     db = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
+    department_id: Optional[int] = None,
+    program_id: Optional[int] = None,
     current_user: User = Depends(deps.get_current_user),
 ) -> Any:
     """
@@ -52,14 +54,28 @@ async def read_timetable(
                      
     elif current_user.role == 'head':
         # Show exams for their department's programs
-        # TimetableEntry -> Exam -> Module -> Program -> Department -> Professor(Head) -> User
-        # Need to fetch Head's department first or join all the way.
-        # Assuming Head is a Professor with role 'head', linked to department.
-        department_query = select(Professor.department_id).where(Professor.user_id == current_user.id)
-        # We can't subquery easily in this fluent style without aliasing
-        # Let's execute separate query to get dept id or join.
-        # Optimization: use subquery or join.
-        pass # Complexity for now, defaulting to ALL for Head/Dean/Admin
+        # TimetableEntry -> Exam -> Module -> Program -> Department
+        prof_res = await db.execute(select(Professor).where(Professor.user_id == current_user.id))
+        prof = prof_res.scalars().first()
+        if prof:
+            query = query.join(TimetableEntry.exam)\
+                         .join(Exam.module)\
+                         .join(Module.program)\
+                         .where(Program.department_id == prof.department_id)
+ 
+    # Global Filters (for Student/Prof or anyone who wants specifically filtered view)
+    if department_id:
+        # Avoid redundant joins if already joined for role
+        # SQLAlchemy handles double joins usually, but let's be safe
+        query = query.join(TimetableEntry.exam, isouter=True)\
+                     .join(Exam.module, isouter=True)\
+                     .join(Module.program, isouter=True)\
+                     .where(Program.department_id == department_id)
+    if program_id:
+        query = query.join(TimetableEntry.exam, isouter=True)\
+                     .join(Exam.module, isouter=True)\
+                     .join(Module.program, isouter=True)\
+                     .where(Module.program_id == program_id)
  
         
     result = await db.execute(query)
@@ -77,6 +93,7 @@ async def read_timetable(
             "supervisor_id": e.supervisor_id,
             "start_time": e.start_time,
             "end_time": e.end_time,
+            "status": e.status,
             "exam_name": e.exam.module.name if e.exam and e.exam.module else f"Exam {e.exam_id}",
             "room_name": e.room.name if e.room else f"Room {e.room_id}",
             "supervisor_name": e.supervisor.user.full_name if e.supervisor and e.supervisor.user else f"Prof {e.supervisor_id}"

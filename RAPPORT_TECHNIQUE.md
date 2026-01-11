@@ -17,7 +17,18 @@ Le système s'appuie sur 10 tables principales :
 - `Rooms` & `Exams` : Ressources et planification.
 - `Timetable_Entries` : Résultat final de l'optimisation.
 
-## 4. Algorithme d'Optimisation
+## 4. Acteurs et Fonctionnalités (Strictement alignés)
+
+La plateforme propose des interfaces distinctes pour chaque acteur institutionnel :
+
+| Acteur | Fonctionnalités principales | Interface |
+| :--- | :--- | :--- |
+| **Vice-Doyen et Doyen** | Vue stratégique globale (occupation, conflits), KPI académiques, **Validation Finale**, Gestion des utilisateurs (Admins/Doyens). | Strategic Dashboard + Validation UI |
+| **Administrateur Examens** | **Génération automatique EDT**, détection des conflits, optimisation des ressources (CRUD Salles/Modules). | Operational Dashboard + CRUD Tools |
+| **Chef de Département** | **Validation par département**, statistiques locales, conflits par formation. | Dept Dashboard + Validation UI |
+| **Étudiants / Professeurs** | Consultation planning personnalisé, **filtrage par département/formation**. | Personalized Calendar + Filters |
+
+## 5. Algorithme d'Optimisation
 L'algorithme trie les examens par degré de conflit (le plus de chevauchements d'étudiants en premier).
 Pour chaque examen, il recherche le premier créneau valide respectant :
 1. **Contraintes Hard** :
@@ -28,11 +39,10 @@ Pour chaque examen, il recherche le premier créneau valide respectant :
    - Priorité aux professeurs du département concerné.
    - **Distribution Équitable** : Priorise les professeurs ayant le moins de surveillances pour assurer une charge de travail égale.
 
-## 5. Fonctionnalités Implémentées
-- ✅ Gestion complète (CRUD) de toutes les entités via le Frontend.
-- ✅ Dashboard analytique avec graphiques Recharts.
-- ✅ Déploiement Cloud (Render & Firebase).
-- ✅ Script SQL complet pour installation.
+## 6. Workflow de Validation
+Le système intègre un cycle de validation à deux niveaux :
+1. **Validation Dépt** : Le Chef de Département vérifie et approuve son planning local.
+2. **Approbation Finale** : Le Doyen valide l'ensemble du calendrier pour publication officielle.
 
 ## 6. Benchmarks de Performance
 - **Chargement des données** : ~0.5s pour 13,000 étudiants.

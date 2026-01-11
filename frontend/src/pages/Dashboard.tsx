@@ -50,16 +50,21 @@ const Dashboard: React.FC = () => {
     if (loading) return <div style={{ padding: 24, textAlign: 'center' }}>Loading Dashboard...</div>;
     if (!user) return <div style={{ padding: 24, textAlign: 'center' }}>Please log in.</div>;
 
-    const isManager = ['admin', 'dean', 'head'].includes(user.role);
+    const isDean = ['dean', 'vice_dean'].includes(user.role);
+    const isAdmin = user.role === 'admin';
+    const isHead = user.role === 'head';
+    const isManager = isDean || isAdmin || isHead;
 
     return (
         <div>
             <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <h2 style={{ margin: 0 }}>Welcome, {user.full_name}</h2>
-                    <span style={{ color: '#666', textTransform: 'capitalize' }}>{user.role} Dashboard</span>
+                    <span style={{ color: '#666', textTransform: 'capitalize' }}>
+                        {user.role.replace('_', ' ')} Dashboard
+                    </span>
                 </div>
-                {isManager && (
+                {isAdmin && (
                     <Button
                         type="primary"
                         size="large"
@@ -69,7 +74,7 @@ const Dashboard: React.FC = () => {
                         disabled={optimizing}
                         style={{ background: 'linear-gradient(45deg, #1890ff, #722ed1)', border: 'none' }}
                     >
-                        {optimizing ? 'Optimizing...' : 'Generate New Timetable'}
+                        {optimizing ? 'Generating EDT...' : 'Generate New Timetable'}
                     </Button>
                 )}
             </div>
@@ -101,40 +106,59 @@ const Dashboard: React.FC = () => {
 
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         <Col span={12}>
-                            <Card title={<span><BarChartOutlined /> Exams per Day</span>} bordered={false}>
+                            <Card title={<span><BarChartOutlined /> {isHead ? 'Conflicts per Program' : 'Conflicts per Department'}</span>} bordered={false}>
                                 <div style={{ height: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={stats.exams_by_day}>
+                                        <BarChart data={isHead ? stats.conflicts_by_program : stats.conflicts_by_dept}>
                                             <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="date" />
+                                            <XAxis dataKey="name" />
                                             <YAxis />
                                             <Tooltip />
-                                            <Bar dataKey="count" fill="#1890ff" radius={[4, 4, 0, 0]} />
+                                            <Bar dataKey="conflict_count" fill="#ff4d4f" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     </ResponsiveContainer>
                                 </div>
                             </Card>
                         </Col>
-                        <Col span={12}>
-                            <Card title={<span><PieChartOutlined /> Room Occupancy (%)</span>} bordered={false}>
-                                <div style={{ height: 300 }}>
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart layout="vertical" data={stats.room_occupancy}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis type="number" domain={[0, 100]} />
-                                            <YAxis dataKey="name" type="category" width={80} />
-                                            <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
-                                            <Bar dataKey="rate" fill="#722ed1" radius={[0, 4, 4, 0]} />
-                                        </BarChart>
-                                    </ResponsiveContainer>
-                                </div>
-                            </Card>
-                        </Col>
+                        {isDean && (
+                            <Col span={12}>
+                                <Card title={<span><PieChartOutlined /> Global Room Occupancy (%)</span>} bordered={false}>
+                                    <div style={{ height: 300 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart layout="vertical" data={stats.room_occupancy}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis type="number" domain={[0, 100]} />
+                                                <YAxis dataKey="name" type="category" width={80} />
+                                                <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                                                <Bar dataKey="rate" fill="#722ed1" radius={[0, 4, 4, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                            </Col>
+                        )}
+                        {isAdmin && (
+                            <Col span={12}>
+                                <Card title={<span><BarChartOutlined /> Exams per Day</span>} bordered={false}>
+                                    <div style={{ height: 300 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart data={stats.exams_by_day}>
+                                                <CartesianGrid strokeDasharray="3 3" />
+                                                <XAxis dataKey="date" />
+                                                <YAxis />
+                                                <Tooltip />
+                                                <Bar dataKey="count" fill="#1890ff" radius={[4, 4, 0, 0]} />
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                            </Col>
+                        )}
                     </Row>
 
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         <Col span={24}>
-                            <Card title={<span><LineChartOutlined /> Professor Supervision Distribution (Equality Check)</span>} bordered={false}>
+                            <Card title={<span><LineChartOutlined /> Professor Load {isHead ? '(Our Dept)' : '(Top 10 Institutional)'}</span>} bordered={false}>
                                 <div style={{ height: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={stats.prof_load}>

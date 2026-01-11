@@ -6,6 +6,7 @@ import enum
 class UserRole(enum.Enum):
     ADMIN = "admin"
     DEAN = "dean"
+    VICE_DEAN = "vice_dean"
     HEAD_OF_DEPT = "head"
     PROFESSOR = "professor"
     STUDENT = "student"
@@ -106,6 +107,7 @@ class TimetableEntry(Base):
     supervisor_id = Column(Integer, ForeignKey("professors.id"))
     start_time = Column(DateTime)
     end_time = Column(DateTime)
+    status = Column(String, default="DRAFT") # DRAFT, DEPT_APPROVED, FINAL_APPROVED
     
     exam = relationship("Exam", back_populates="timetable_entry")
     room = relationship("Room")

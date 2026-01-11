@@ -75,47 +75,62 @@ async def get_dashboard_kpi(
             stats["total_exams"] = exam_count.scalar()
             
             stats["scope"] = "Department"
-    # --- Detailed Statistics for Charts ---
-
-    # 1. Exams by Day (Timeline)
-    # Group by date part of start_time
-    day_stats_query = (
-        select(func.date(TimetableEntry.start_time).label("date"), func.count(TimetableEntry.id).label("count"))
-        .group_by(func.date(TimetableEntry.start_time))
-        .order_by(func.date(TimetableEntry.start_time))
-    )
-    day_res = await db.execute(day_stats_query)
-    stats["exams_by_day"] = [{"date": str(row.date), "count": row.count} for row in day_res.all()]
-
-    # 2. Room Occupancy (using the new PL/pgSQL function or direct query)
-    # Let's use a direct query for robustness in case function isn't yet in DB during dev
-    occupancy_query = """
+    # 4. Conflict Rates (Strategic View for Dean/Head)
+    # Conflict is detected if validate_timetable() returns results.
+    # For a strategic view, we want conflicts per dept or program.
+    conflict_query = """
         SELECT 
-            r.name,
-            AVG(CAST(en_counts.cnt AS NUMERIC) / r.capacity * 100) as avg_rate
-        FROM rooms r
-        JOIN timetable_entries t ON r.id = t.room_id
+            d.name,
+            COUNT(DISTINCT t.id) as conflict_count
+        FROM timetable_entries t
         JOIN exams e ON t.exam_id = e.id
-        JOIN (SELECT module_id, COUNT(*) as cnt FROM enrollments GROUP BY module_id) en_counts ON e.module_id = en_counts.module_id
-        GROUP BY r.name
-        LIMIT 10;
+        JOIN modules m ON e.module_id = m.id
+        JOIN programs p ON m.program_id = p.id
+        JOIN departments d ON p.department_id = d.id
+        JOIN (
+            -- Subquery to find exam_ids that have conflicts (Student Daily Limit)
+            SELECT t1.exam_id
+            FROM timetable_entries t1
+            JOIN exams e1 ON t1.exam_id = e1.id
+            JOIN modules m1 ON e1.module_id = m1.id
+            JOIN enrollments en1 ON m1.id = en1.module_id
+            JOIN students s1 ON en1.student_id = s1.id
+            GROUP BY s1.id, t1.start_time::DATE, t1.exam_id
+            HAVING COUNT(*) > 1
+        ) conflicts ON t.exam_id = conflicts.exam_id
+        GROUP BY d.name;
     """
-    occ_res = await db.execute(sa.text(occupancy_query))
-    stats["room_occupancy"] = [{"name": row[0], "rate": float(row[1])} for row in occ_res.fetchall()]
+    conf_res = await db.execute(sa.text(conflict_query))
+    stats["conflicts_by_dept"] = [{"name": row[0], "count": row[1]} for row in conf_res.fetchall()]
 
-    # 3. Professor Load (Equality of Supervisions)
-    prof_load_query = """
-        SELECT 
-            u.full_name,
-            COUNT(t.id) as count
-        FROM professors p
-        JOIN users u ON p.user_id = u.id
-        LEFT JOIN timetable_entries t ON p.id = t.supervisor_id
-        GROUP BY u.full_name
-        ORDER BY count DESC
-        LIMIT 10;
-    """
-    load_res = await db.execute(sa.text(prof_load_query))
-    stats["prof_load"] = [{"name": row[0], "count": row[1]} for row in load_res.fetchall()]
+    if current_user.role == 'head':
+        # Conflicts per program for this head's department
+        prog_conflict_query = """
+            SELECT 
+                p.name,
+                COUNT(DISTINCT t.id) as conflict_count
+            FROM timetable_entries t
+            JOIN exams e ON t.exam_id = e.id
+            JOIN modules m ON e.module_id = m.id
+            JOIN programs p ON m.program_id = p.id
+            JOIN (
+                SELECT t1.exam_id
+                FROM timetable_entries t1
+                JOIN exams e1 ON t1.exam_id = e1.id
+                JOIN modules m1 ON e1.module_id = m1.id
+                JOIN enrollments en1 ON m1.id = en1.module_id
+                JOIN students s1 ON en1.student_id = s1.id
+                GROUP BY s1.id, t1.start_time::DATE, t1.exam_id
+                HAVING COUNT(*) > 1
+            ) conflicts ON t.exam_id = conflicts.exam_id
+            WHERE p.department_id = :dept_id
+            GROUP BY p.name;
+        """
+        # Get dept_id
+        prof_res = await db.execute(select(Professor).where(Professor.user_id == current_user.id))
+        prof = prof_res.scalars().first()
+        if prof:
+            prog_conf_res = await db.execute(sa.text(prog_conflict_query), {"dept_id": prof.department_id})
+            stats["conflicts_by_program"] = [{"name": row[0], "count": row[1]} for row in prog_conf_res.fetchall()]
 
     return stats
