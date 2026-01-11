@@ -17,13 +17,7 @@ depends_on: Union[str, Sequence[str], None] = None
 
 
 def upgrade() -> None:
-    # 1. Update UserRole Enum (PostgreSQL specific way to add value to existing type)
-    # Since Alembic doesn't natively support adding enum values easily in a cross-platform way,
-    # we use raw SQL for PG.
-    op.execute("COMMIT") # Enums can't be modified in transactions in some cases
-    op.execute("ALTER TYPE userrole ADD VALUE 'vice_dean'")
-    
-    # 2. Add status column to timetable_entries
+    # 1. Add status column to timetable_entries
     op.add_column('timetable_entries', sa.Column('status', sa.String(), nullable=True, server_default='DRAFT'))
 
 def downgrade() -> None:
