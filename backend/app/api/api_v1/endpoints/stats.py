@@ -133,4 +133,36 @@ async def get_dashboard_kpi(
             prog_conf_res = await db.execute(sa.text(prog_conflict_query), {"dept_id": prof.department_id})
             stats["conflicts_by_program"] = [{"name": row[0], "count": row[1]} for row in prog_conf_res.fetchall()]
 
+    # 5. Validation Workflow Summary (Dean/Vice-Dean Strategic KPIs)
+    status_query = select(TimetableEntry.status, func.count(TimetableEntry.id)).group_by(TimetableEntry.status)
+    status_res = await db.execute(status_query)
+    stats["validation_status"] = {row[0]: row[1] for row in status_res.all()}
+    
+    # Ensure all statuses exist in dict
+    for s in ["DRAFT", "DEPT_APPROVED", "FINAL_APPROVED"]:
+        if s not in stats["validation_status"]:
+            stats["validation_status"][s] = 0
+
+    # 6. Global Room Occupancy Rate (%)
+    # Average of (module_enrollments / room_capacity) * 100
+    occ_query = """
+        SELECT 
+            AVG(CAST(en_counts.cnt AS NUMERIC) / r.capacity * 100) as avg_rate
+        FROM rooms r
+        JOIN timetable_entries t ON r.id = t.room_id
+        JOIN exams e ON t.exam_id = e.id
+        JOIN (SELECT module_id, COUNT(*) as cnt FROM enrollments GROUP BY module_id) en_counts ON e.module_id = en_counts.module_id
+        WHERE r.capacity > 0;
+    """
+    occ_res = await db.execute(sa.text(occ_query))
+    stats["occupancy_rate"] = float(occ_res.scalar() or 0)
+
+    # 7. Quality Score (Simplified logic: 100 - (conflicts / total_exams * 100))
+    total_entries = stats["total_exams"]
+    if total_entries > 0:
+        total_conflicts = sum(d["count"] for d in stats["conflicts_by_dept"])
+        stats["quality_score"] = max(0, 100 - (total_conflicts / total_entries * 100))
+    else:
+        stats["quality_score"] = 100
+
     return stats

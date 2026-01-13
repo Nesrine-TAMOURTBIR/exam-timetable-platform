@@ -23,7 +23,25 @@ async def create_roles():
             await session.commit()
             print("Dean Created: dean@example.com")
         else:
-            print("Dean already exists.")
+        # 1b. Create Vice-Dean
+        print("Checking for Vice-Dean...")
+        result = await session.execute(select(User).where(User.role == 'vice_dean'))
+        vicedean = result.scalars().first()
+        
+        if not vicedean:
+            print("Creating Vice-Dean User...")
+            vicedean = User(
+                email="vicedean@example.com",
+                hashed_password="hashed_secret",
+                full_name="Dr. Sarah Vice-Dean",
+                role="vice_dean",
+                is_active=True
+            )
+            session.add(vicedean)
+            await session.commit()
+            print("Vice-Dean Created: vicedean@example.com")
+        else:
+            print("Vice-Dean already exists.")
 
         # 2. Create Head of Department
         print("Checking for Head of Dept...")

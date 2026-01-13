@@ -99,13 +99,32 @@ const Dashboard: React.FC = () => {
                         </Col>
                         <Col span={6}>
                             <Card bordered={false} className="stat-card">
-                                <Statistic title="Opt. Score" value={98} suffix="%" prefix={<CheckCircleOutlined />} />
+                                <Statistic
+                                    title="Avg Room Occupancy"
+                                    value={stats.occupancy_rate}
+                                    suffix="%"
+                                    precision={1}
+                                    valueStyle={{ color: stats.occupancy_rate > 80 ? '#cf1322' : '#3f51b5' }}
+                                    prefix={<PieChartOutlined />}
+                                />
+                            </Card>
+                        </Col>
+                        <Col span={6}>
+                            <Card bordered={false} className="stat-card">
+                                <Statistic
+                                    title="Quality Score"
+                                    value={stats.quality_score}
+                                    suffix="%"
+                                    precision={1}
+                                    valueStyle={{ color: stats.quality_score > 90 ? '#52c41a' : '#faad14' }}
+                                    prefix={<CheckCircleOutlined />}
+                                />
                             </Card>
                         </Col>
                     </Row>
 
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                        <Col span={12}>
+                        <Col span={isDean ? 8 : 12}>
                             <Card title={<span><BarChartOutlined /> {isHead ? 'Conflicts per Program' : 'Conflicts per Department'}</span>} bordered={false}>
                                 <div style={{ height: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
@@ -121,8 +140,39 @@ const Dashboard: React.FC = () => {
                             </Card>
                         </Col>
                         {isDean && (
-                            <Col span={12}>
-                                <Card title={<span><PieChartOutlined /> Global Room Occupancy (%)</span>} bordered={false}>
+                            <Col span={8}>
+                                <Card title={<span><CheckCircleOutlined /> Validation Funnel</span>} bordered={false}>
+                                    <div style={{ height: 300 }}>
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Draft', value: stats.validation_status.DRAFT },
+                                                        { name: 'Dept Approved', value: stats.validation_status.DEPT_APPROVED },
+                                                        { name: 'Final Approved', value: stats.validation_status.FINAL_APPROVED },
+                                                    ]}
+                                                    cx="50%"
+                                                    cy="50%"
+                                                    innerRadius={60}
+                                                    outerRadius={80}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                >
+                                                    <Cell fill="#bfbfbf" />
+                                                    <Cell fill="#1890ff" />
+                                                    <Cell fill="#52c41a" />
+                                                </Pie>
+                                                <Tooltip />
+                                                <Legend />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    </div>
+                                </Card>
+                            </Col>
+                        )}
+                        {(isDean || isAdmin) && (
+                            <Col span={isDean ? 8 : 12}>
+                                <Card title={<span><PieChartOutlined /> {isDean ? 'Institution-wide Room Usage' : 'Room Occupancy (%)'}</span>} bordered={false}>
                                     <div style={{ height: 300 }}>
                                         <ResponsiveContainer width="100%" height="100%">
                                             <BarChart layout="vertical" data={stats.room_occupancy}>
@@ -137,6 +187,9 @@ const Dashboard: React.FC = () => {
                                 </Card>
                             </Col>
                         )}
+                    </Row>
+
+                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         {isAdmin && (
                             <Col span={12}>
                                 <Card title={<span><BarChartOutlined /> Exams per Day</span>} bordered={false}>
@@ -154,10 +207,7 @@ const Dashboard: React.FC = () => {
                                 </Card>
                             </Col>
                         )}
-                    </Row>
-
-                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                        <Col span={24}>
+                        <Col span={isAdmin ? 12 : 24}>
                             <Card title={<span><LineChartOutlined /> Professor Load {isHead ? '(Our Dept)' : '(Top 10 Institutional)'}</span>} bordered={false}>
                                 <div style={{ height: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">

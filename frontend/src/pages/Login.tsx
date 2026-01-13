@@ -70,8 +70,14 @@ const Login: React.FC = () => {
                         </Button>
                     </Form.Item>
 
-                    <div style={{ textAlign: 'center', color: '#888' }}>
-                        Demo: admin@example.com / secret
+                    <div style={{ textAlign: 'center', color: '#888', fontSize: '12px' }}>
+                        <p style={{ margin: 0 }}>Demo Credentials (Password: <b>secret</b>)</p>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                            <span>Admin: admin@example.com</span>
+                            <span>Dean: dean@example.com | Vice-Dean: vicedean@example.com</span>
+                            <span>Head: head@example.com | Prof: prof@example.com</span>
+                            <span>Student: student@example.com</span>
+                        </div>
                     </div>
                 </Form>
             </Card>
