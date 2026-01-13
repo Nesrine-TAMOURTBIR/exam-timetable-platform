@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Tag, Card, message, Select, Space } from 'antd';
+import { Table, Tag, Card, message, Select, Space, Button } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import api from '../api/client';
 import moment from 'moment';
@@ -119,7 +119,7 @@ const TimetableView: React.FC = () => {
                 let color = 'default';
                 if (status === 'DEPT_APPROVED') color = 'blue';
                 if (status === 'FINAL_APPROVED') color = 'green';
-                return <Tag color={color}>{status.replace('_', ' ')}</Tag>;
+                return <Tag color={color}>{(status || '').replace('_', ' ')}</Tag>;
             }
         },
     ];

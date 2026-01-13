@@ -12,6 +12,10 @@ const MainLayout: React.FC = () => {
     const [collapsed, setCollapsed] = useState(false);
     const [user, setUser] = useState<any>(null);
 
+    const themeColor = user?.role === 'admin' ? '#1890ff' :
+        (user?.role === 'dean' || user?.role === 'vice_dean') ? '#722ed1' :
+            user?.role === 'head' ? '#13c2c2' : '#52c41a';
+
     // Check auth and fetch user
     useEffect(() => {
         const fetchUser = async () => {

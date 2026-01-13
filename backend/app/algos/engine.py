@@ -86,101 +86,96 @@ class OptimizationEngine:
         print("Conflict graph built.")
 
     def initial_solution(self):
-        """Greedy constructive heuristic"""
-        print("Starting Greedy Initial Solution...")
-        # Sort exams by degree (number of conflicts) descending
+        """
+        Génération constructive avec respect strict des contraintes :
+        1. Capacité des salles (Nombre d'étudiants inscrits <= Capacité)
+        2. Unicité quotidienne pour l'étudiant (Max 1 exam / jour)
+        3. Disponibilité des salles et des professeurs
+        4. Charge de surveillance (Max 3 / jour, répartition équitable)
+        """
+        print("🚀 Lancement de l'optimisation des ressources...")
+        
+        # Tri des examens par difficulté (nombre de conflits potentiels)
         sorted_exams = sorted(self.exams, key=lambda e: len(self.conflicts.get(e.id, [])), reverse=True)
         
-        # Configuration
-        DAYS = 14
+        # Configuration temporelle
+        DAYS = 12
         SLOTS_PER_DAY = 4
         slots = [(d, s) for d in range(DAYS) for s in range(SLOTS_PER_DAY)]
         
-        # State tracking
-        # (day, slot, room_id) -> exam_id
+        # Suivi d'état
         room_usage = {} 
-        # (day, slot, prof_id) -> exam_id
         prof_usage = {} 
-        # (day, prof_id) -> count
         prof_daily_counts = {} 
-        # prof_id -> total_count across all days
         prof_total_counts = {p.id: 0 for p in self.profs}
         
         unassigned = []
-        
         total_exams = len(sorted_exams)
+        
         for idx, exam in enumerate(sorted_exams):
             assigned = False
-            needed_capacity = len(self.enrollments.get(exam.id, []))
+            student_count = len(self.enrollments.get(exam.id, []))
             
-            # Find first valid slot/room/prof
+            # Recherche du meilleur créneau (Heuristique First-Fit-Decreasing)
             for day, slot in slots:
-                # 1. Check conflict with neighbors (Student Daily Limit)
-                conflict_found = False
+                # A. CONTRAINTE ÉTUDIANT : Max 1 examen par jour
+                student_conflict = False
                 neighbors = self.conflicts.get(exam.id, [])
                 for neighbor_id in neighbors:
                     if neighbor_id in self.solution:
                         n_day, n_slot, _, _ = self.solution[neighbor_id]
-                        # Constraint: Student max 1 exam per day
-                        if n_day == day: # Same day conflict!
-                            conflict_found = True
+                        if n_day == day:
+                            student_conflict = True
                             break
-                if conflict_found: continue
+                if student_conflict: continue
 
-                # 2. Try to find a room (Capacity & Availability)
-                valid_room = None
-                # Optimization: Sort rooms by capacity (Best Fit) to save large rooms
-                # Filter rooms >= capacity
-                candidate_rooms = sorted([r for r in self.rooms if r.capacity >= needed_capacity], key=lambda r: r.capacity)
-                
-                for room in candidate_rooms:
+                # B. CONTRAINTE SALLE : Capacité et Disponibilité
+                selected_room = None
+                # Optimisation Soft : On choisit la salle avec le MOINS de gaspillage (Best-Fit)
+                # On trie par capacité ascendante, et on filtre celles qui sont >= student_count
+                eligible_rooms = sorted([r for r in self.rooms if r.capacity >= student_count], key=lambda r: r.capacity)
+                for room in eligible_rooms:
                     if (day, slot, room.id) not in room_usage:
-                        valid_room = room
+                        # On a trouvé la salle la plus "serrée" disponible
+                        selected_room = room
                         break
-                if not valid_room: continue
+                if not selected_room: continue
 
-                # 3. Try to find a supervisor
-                valid_prof = None
+                # C. CONTRAINTE PROFESSEUR : Charge et Disponibilité
+                selected_prof = None
+                eligible_profs = []
+                for p in self.profs:
+                    if (day, slot, p.id) in prof_usage: continue
+                    if prof_daily_counts.get((day, p.id), 0) >= 3: continue
+                    eligible_profs.append(p)
                 
-                # Heuristic: Sort profs to prefer own department and then minimum total count
+                if not eligible_profs: continue
+                
+                # Équité 2.0 : Priorité au département puis à celui qui a le moins de charge totale
                 exam_dept_id = exam.module.program.department_id if exam.module and exam.module.program else -1
-                
-                # Filter valid profs first to avoid sorting everyone
-                candidates = []
-                for prof in self.profs:
-                    daily_count = prof_daily_counts.get((day, prof.id), 0)
-                    if daily_count >= 3: continue
-                    if (day, slot, prof.id) in prof_usage: continue
-                    candidates.append(prof)
-                
-                # Sort: 
-                # 1. First those in same dept
-                # 2. Then those with minimum total supervisions (for equality)
-                candidates.sort(key=lambda p: (
+                eligible_profs.sort(key=lambda p: (
                     0 if p.department_id == exam_dept_id else 1,
                     prof_total_counts.get(p.id, 0)
                 ))
                 
-                if candidates:
-                    valid_prof = candidates[0]
-                
-                if valid_prof:
-                    # Assign
-                    self.solution[exam.id] = (day, slot, valid_room.id, valid_prof.id)
-                    room_usage[(day, slot, valid_room.id)] = exam.id
-                    prof_usage[(day, slot, valid_prof.id)] = exam.id
-                    prof_daily_counts[(day, valid_prof.id)] = prof_daily_counts.get((day, valid_prof.id), 0) + 1
-                    prof_total_counts[valid_prof.id] += 1
-                    assigned = True
-                    break
+                selected_prof = eligible_profs[0]
+
+                # VALIDATION FINALE & AFFECTATION
+                self.solution[exam.id] = (day, slot, selected_room.id, selected_prof.id)
+                room_usage[(day, slot, selected_room.id)] = exam.id
+                prof_usage[(day, slot, selected_prof.id)] = exam.id
+                prof_daily_counts[(day, selected_prof.id)] = prof_daily_counts.get((day, selected_prof.id), 0) + 1
+                prof_total_counts[selected_prof.id] += 1
+                assigned = True
+                break
             
             if not assigned:
                 unassigned.append(exam.id)
             
-            if idx % 100 == 0:
-                print(f"Assigning exams: {idx}/{total_exams}...")
+            if idx % 50 == 0:
+                print(f"⌛ Optimisation : {idx}/{total_exams} examens planifiés...")
 
-        print(f"Initial solution complete. Unassigned: {len(unassigned)}/{total_exams}")
+        print(f"✅ Optimisation terminée. Non-assignés : {len(unassigned)}/{total_exams}")
         return len(unassigned) == 0
 
     def optimize(self):

@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Statistic, Button, message, Alert, Divider } from 'antd';
-import { RocketOutlined, CheckCircleOutlined, UserOutlined, BookOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined } from '@ant-design/icons';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, LineChart, Line, Cell, PieChart, Pie } from 'recharts';
+import { Row, Col, Card, Statistic, Button, message, Alert, Table, Tag } from 'antd';
+import { RocketOutlined, CheckCircleOutlined, UserOutlined, BookOutlined, BarChartOutlined, LineChartOutlined, PieChartOutlined, AreaChartOutlined } from '@ant-design/icons';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
 import api from '../api/client';
 import TimetableView from './TimetableView';
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884d8', '#82ca9d'];
+
 
 const Dashboard: React.FC = () => {
     const [optimizing, setOptimizing] = useState(false);
     const [stats, setStats] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [detailedConflicts, setDetailedConflicts] = useState<any[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -25,6 +26,11 @@ const Dashboard: React.FC = () => {
             if (['admin', 'dean', 'head', 'vice_dean'].includes(userRes.data.role)) {
                 const statsRes = await api.get('/stats/dashboard-kpi');
                 setStats(statsRes.data);
+
+                if (userRes.data.role === 'admin') {
+                    const confRes = await api.get('/stats/conflicts-detailed');
+                    setDetailedConflicts(confRes.data);
+                }
             }
         } catch (err) {
             console.error(err);
@@ -119,9 +125,9 @@ const Dashboard: React.FC = () => {
     return (
         <div style={{ padding: '0 8px' }}>
             <div style={{ marginBottom: 24 }}>
-                <h2 style={{ margin: 0, fontSize: '24px', color: themeColor }}>Bienvenue, {user.full_name}</h2>
+                <h2 style={{ margin: 0, fontSize: '24px', color: themeColor }}>Bienvenue, {user?.full_name || 'Utilisateur'}</h2>
                 <span style={{ color: '#8c8c8c', textTransform: 'capitalize', fontWeight: 500 }}>
-                    Espace {user.role.replace('_', ' ')} — Université d'Excellence
+                    Espace {(user?.role || '').replace('_', ' ')} — Université d'Excellence
                 </span>
             </div>
 
@@ -151,10 +157,10 @@ const Dashboard: React.FC = () => {
                                 />
                             </Card>
                         </Col>
-                        <Col span={6}>
+                        <Col span={isDean ? 4 : 6}>
                             <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                 <Statistic
-                                    title="Score de Qualité"
+                                    title="Qualité"
                                     value={stats.quality_score}
                                     suffix="%"
                                     precision={1}
@@ -163,6 +169,35 @@ const Dashboard: React.FC = () => {
                                 />
                             </Card>
                         </Col>
+                        {isDean && (
+                            <Col span={8}>
+                                <Card bordered={false} hoverable style={{ borderLeft: `4px solid #722ed1`, background: '#f9f0ff' }}>
+                                    <Statistic
+                                        title="Gain d'Optimisation (AI)"
+                                        value={stats.optimization_gain}
+                                        suffix="%"
+                                        precision={1}
+                                        valueStyle={{ color: '#722ed1' }}
+                                        prefix={<RocketOutlined />}
+                                    />
+                                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Conflits résolus par rapport au planning naïf</div>
+                                </Card>
+                            </Col>
+                        )}
+                        {isAdmin && (
+                            <Col span={6}>
+                                <Card bordered={false} hoverable style={{ borderLeft: `4px solid #fa8c16` }}>
+                                    <Statistic
+                                        title="Gaspillage Salles"
+                                        value={stats.room_waste_pct}
+                                        suffix="%"
+                                        precision={1}
+                                        valueStyle={{ color: stats.room_waste_pct < 20 ? '#52c41a' : '#fa8c16' }}
+                                        prefix={<AreaChartOutlined />}
+                                    />
+                                </Card>
+                            </Col>
+                        )}
                     </Row>
 
                     <Row gutter={[16, 16]}>
@@ -181,37 +216,35 @@ const Dashboard: React.FC = () => {
                                 </div>
                             </Card>
                         </Col>
-                        {isDean && (
-                            <Col span={8}>
-                                <Card title={<span><CheckCircleOutlined /> Validation Funnel</span>} bordered={false}>
-                                    <div style={{ height: 300 }}>
-                                        <ResponsiveContainer width="100%" height="100%">
-                                            <PieChart>
-                                                <Pie
-                                                    data={[
-                                                        { name: 'Draft', value: stats.validation_status.DRAFT },
-                                                        { name: 'Dept Approved', value: stats.validation_status.DEPT_APPROVED },
-                                                        { name: 'Final Approved', value: stats.validation_status.FINAL_APPROVED },
-                                                    ]}
-                                                    cx="50%"
-                                                    cy="50%"
-                                                    innerRadius={60}
-                                                    outerRadius={80}
-                                                    paddingAngle={5}
-                                                    dataKey="value"
-                                                >
-                                                    <Cell fill="#bfbfbf" />
-                                                    <Cell fill="#1890ff" />
-                                                    <Cell fill="#52c41a" />
-                                                </Pie>
-                                                <Tooltip />
-                                                <Legend />
-                                            </PieChart>
-                                        </ResponsiveContainer>
-                                    </div>
-                                </Card>
-                            </Col>
-                        )}
+                        <Col span={isDean ? 8 : 12}>
+                            <Card title={<span><CheckCircleOutlined /> État des Validations (Doyen)</span>} bordered={false} className="glass-card">
+                                <div style={{ height: 300 }}>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: 'En Brouillon', value: stats.validation_status.DRAFT },
+                                                    { name: 'Validé Dept', value: stats.validation_status.DEPT_APPROVED },
+                                                    { name: 'Validé Final', value: stats.validation_status.FINAL_APPROVED },
+                                                ]}
+                                                cx="50%"
+                                                cy="50%"
+                                                innerRadius={60}
+                                                outerRadius={80}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                            >
+                                                <Cell fill="#bfbfbf" />
+                                                <Cell fill="#1890ff" />
+                                                <Cell fill="#52c41a" />
+                                            </Pie>
+                                            <Tooltip />
+                                            <Legend verticalAlign="bottom" height={36} />
+                                        </PieChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </Card>
+                        </Col>
                         {(isDean || isAdmin) && (
                             <Col span={isDean ? 8 : 12}>
                                 <Card title={<span><PieChartOutlined /> {isDean ? 'Institution-wide Room Usage' : 'Room Occupancy (%)'}</span>} bordered={false}>
@@ -221,7 +254,7 @@ const Dashboard: React.FC = () => {
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis type="number" domain={[0, 100]} />
                                                 <YAxis dataKey="name" type="category" width={80} />
-                                                <Tooltip formatter={(value: number) => `${value.toFixed(1)}%`} />
+                                                <Tooltip formatter={(value: any) => [`${parseFloat(value).toFixed(1)}%`, 'Rate']} />
                                                 <Bar dataKey="rate" fill="#722ed1" radius={[0, 4, 4, 0]} />
                                             </BarChart>
                                         </ResponsiveContainer>
@@ -279,7 +312,25 @@ const Dashboard: React.FC = () => {
                 />
             )}
 
-            <Card title={isManager ? "Master Schedule Overview" : "My Upcoming Exams"} bordered={false}>
+            {(isAdmin || isHead) && detailedConflicts.length > 0 && (
+                <Card
+                    title={<span style={{ color: '#cf1322' }}><BarChartOutlined /> {isHead ? 'Audit des Conflits de Département' : 'Audit des Conflits Résiduels'}</span>}
+                    style={{ marginBottom: 24, border: '1px solid #ffa39e' }}
+                    className="glass-card"
+                >
+                    <Table
+                        dataSource={detailedConflicts}
+                        pagination={{ pageSize: 5 }}
+                        columns={[
+                            { title: 'Type', dataIndex: 'type', key: 'type', render: (t) => <Tag color={t.includes('Salle') ? 'volcano' : 'red'}>{t}</Tag> },
+                            { title: 'Cible', dataIndex: 'target', key: 'target', render: (text) => <b>{text}</b> },
+                            { title: 'Détails', dataIndex: 'detail', key: 'detail' },
+                        ]}
+                    />
+                </Card>
+            )}
+
+            <Card title={isManager ? "Vue d'Ensemble du Planning" : "Mes Examens à Venir"} bordered={false}>
                 <TimetableView />
             </Card>
         </div>
