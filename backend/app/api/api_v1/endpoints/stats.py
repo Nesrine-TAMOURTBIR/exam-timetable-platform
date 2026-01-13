@@ -1,5 +1,6 @@
 from typing import Any, List
 from fastapi import APIRouter, Depends
+import sqlalchemy as sa
 from sqlalchemy import select, func, distinct
 from app.api import deps
 from app.models.all_models import User, Student, Professor, Room, Department, Exam, TimetableEntry, Module, Program

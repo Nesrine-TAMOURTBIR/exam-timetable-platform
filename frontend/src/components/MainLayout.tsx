@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Layout, Menu, Button, Avatar } from 'antd';
 import { UserOutlined, LogoutOutlined, CalendarOutlined, DashboardOutlined, SettingOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import api from '../api/client';
 
 const { Header, Sider, Content } = Layout;
 
@@ -37,23 +38,28 @@ const MainLayout: React.FC = () => {
 
 
 
-    const getMenuItems = () => {
+    const getMenuItems = (): any[] => {
         if (!user) return [];
 
-        const items = [
+        const items: any[] = [
             { key: '/', icon: <DashboardOutlined />, label: 'Dashboard', onClick: () => navigate('/') },
             { key: '/timetable', icon: <CalendarOutlined />, label: 'Timetable', onClick: () => navigate('/timetable') },
         ];
 
         if (user.role === 'admin') {
-            items.push(
-                { key: '/manage/departments', icon: <SettingOutlined />, label: 'Departments', onClick: () => navigate('/manage/departments') },
-                { key: '/manage/rooms', icon: <SettingOutlined />, label: 'Rooms', onClick: () => navigate('/manage/rooms') },
-                { key: '/manage/programs', icon: <SettingOutlined />, label: 'Programs', onClick: () => navigate('/manage/programs') },
-                { key: '/manage/modules', icon: <SettingOutlined />, label: 'Modules', onClick: () => navigate('/manage/modules') },
-                { key: '/manage/users', icon: <SettingOutlined />, label: 'Users', onClick: () => navigate('/manage/users') },
-                { key: '/manage/exams', icon: <SettingOutlined />, label: 'Exams', onClick: () => navigate('/manage/exams') },
-            );
+            items.push({
+                key: '/settings-group',
+                icon: <SettingOutlined />,
+                label: 'Settings',
+                children: [
+                    { key: '/manage/departments', label: 'Departments', onClick: () => navigate('/manage/departments') },
+                    { key: '/manage/rooms', label: 'Rooms', onClick: () => navigate('/manage/rooms') },
+                    { key: '/manage/programs', label: 'Programs', onClick: () => navigate('/manage/programs') },
+                    { key: '/manage/modules', label: 'Modules', onClick: () => navigate('/manage/modules') },
+                    { key: '/manage/users', label: 'Users', onClick: () => navigate('/manage/users') },
+                    { key: '/manage/exams', label: 'Exams', onClick: () => navigate('/manage/exams') },
+                ]
+            });
         }
 
         if (user.role === 'dean' || user.role === 'vice_dean') {

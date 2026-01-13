@@ -22,7 +22,7 @@ const Dashboard: React.FC = () => {
             const userRes = await api.get('/login/me');
             setUser(userRes.data);
 
-            if (['admin', 'dean', 'head'].includes(userRes.data.role)) {
+            if (['admin', 'dean', 'head', 'vice_dean'].includes(userRes.data.role)) {
                 const statsRes = await api.get('/stats/dashboard-kpi');
                 setStats(statsRes.data);
             }
