@@ -78,19 +78,27 @@ const MainLayout: React.FC = () => {
                 <Menu theme="dark" mode="inline" selectedKeys={[location.pathname]} items={getMenuItems()} />
             </Sider>
             <Layout className="site-layout">
-                <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', marginRight: 16 }}>
-                        <Avatar icon={<UserOutlined />} style={{ marginRight: 8 }} />
-                        <span style={{ fontWeight: 500 }}>{user?.full_name || 'Loading...'}</span>
+                <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0' }}>
+                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#001529' }}>
+                        Portal d'Examens <span style={{ color: '#8c8c8c', fontWeight: 'normal', fontSize: '14px' }}>| {user?.role?.toUpperCase()}</span>
                     </div>
-                    <Button
-                        type="text"
-                        icon={<LogoutOutlined />}
-                        onClick={handleLogout}
-                        danger
-                    >
-                        Logout
-                    </Button>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', marginRight: 24 }}>
+                            <div style={{ textAlign: 'right', marginRight: 12 }}>
+                                <div style={{ fontWeight: 600, lineHeight: '18px' }}>{user?.full_name || 'Chargement...'}</div>
+                                <div style={{ fontSize: '11px', color: '#8c8c8c', textTransform: 'uppercase' }}>{user?.role}</div>
+                            </div>
+                            <Avatar size="large" icon={<UserOutlined />} style={{ backgroundColor: themeColor }} />
+                        </div>
+                        <Button
+                            type="text"
+                            icon={<LogoutOutlined />}
+                            onClick={handleLogout}
+                            danger
+                        >
+                            Déconnexion
+                        </Button>
+                    </div>
                 </Header>
                 <Content style={{ margin: '16px' }}>
                     <div style={{ padding: 24, minHeight: 360, background: '#fff', borderRadius: 8 }}>

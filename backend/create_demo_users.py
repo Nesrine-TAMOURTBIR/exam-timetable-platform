@@ -22,23 +22,25 @@ async def create_demo_users():
         
         credentials_list = []
         
-        # 1. Admin (should already exist, but check)
+        # 1. Admin
         result = await session.execute(select(User).where(User.email == "admin@example.com"))
         admin = result.scalars().first()
         if not admin:
             admin = User(
                 email="admin@example.com",
                 hashed_password="hashed_secret",
-                full_name="System Administrator",
+                full_name="Directeur des Examens",
                 role=UserRole.ADMIN.value,
                 is_active=True
             )
             session.add(admin)
-            await session.commit()
             print("✓ Admin created: admin@example.com / secret")
         else:
-            print("✓ Admin already exists: admin@example.com / secret")
-        credentials_list.append(("Admin", "admin@example.com", "secret"))
+            admin.full_name = "Directeur des Examens"
+            admin.role = UserRole.ADMIN.value
+            print("✓ Admin updated: admin@example.com / secret")
+        await session.commit()
+        credentials_list.append(("Directeur Examens", "admin@example.com", "secret"))
         
         # 2. Dean
         result = await session.execute(select(User).where(User.email == "dean@example.com"))
@@ -47,16 +49,18 @@ async def create_demo_users():
             dean = User(
                 email="dean@example.com",
                 hashed_password="hashed_secret",
-                full_name="Dr. Ahmed Dean",
+                full_name="Doyen de la Faculté",
                 role=UserRole.DEAN.value,
                 is_active=True
             )
             session.add(dean)
-            await session.commit()
             print("✓ Dean created: dean@example.com / secret")
         else:
-            print("✓ Dean already exists: dean@example.com / secret")
-        credentials_list.append(("Dean", "dean@example.com", "secret"))
+            dean.full_name = "Doyen de la Faculté"
+            dean.role = UserRole.DEAN.value
+            print("✓ Dean updated: dean@example.com / secret")
+        await session.commit()
+        credentials_list.append(("Doyen", "dean@example.com", "secret"))
         
         # 2b. Vice-Dean
         result = await session.execute(select(User).where(User.email == "vicedean@example.com"))

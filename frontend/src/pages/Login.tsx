@@ -70,13 +70,16 @@ const Login: React.FC = () => {
                         </Button>
                     </Form.Item>
 
-                    <div style={{ textAlign: 'center', color: '#888', fontSize: '12px' }}>
-                        <p style={{ margin: 0 }}>Demo Credentials (Password: <b>secret</b>)</p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                            <span>Admin: admin@example.com</span>
-                            <span>Dean: dean@example.com | Vice-Dean: vicedean@example.com</span>
-                            <span>Head: head@example.com | Prof: prof@example.com</span>
-                            <span>Student: student@example.com</span>
+                    <div style={{ textAlign: 'center' }}>
+                        <div style={{ marginTop: 16 }}>
+                            <p style={{ margin: 0, fontSize: '12px', color: '#888' }}>Comptes de Démo (Tous mdp: <b>secret</b>):</p>
+                            <div style={{ fontSize: '11px', color: '#555' }}>
+                                • <b>Admin (Directeur)</b>: admin@example.com<br />
+                                • <b>Doyen</b>: dean@example.com<br />
+                                • <b>Chef Dept</b>: head@example.com<br />
+                                • <b>Professeur</b>: prof@example.com<br />
+                                • <b>Étudiant</b>: student@example.com
+                            </div>
                         </div>
                     </div>
                 </Form>

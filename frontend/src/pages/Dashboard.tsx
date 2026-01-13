@@ -55,64 +55,106 @@ const Dashboard: React.FC = () => {
     const isHead = user.role === 'head';
     const isManager = isDean || isAdmin || isHead;
 
-    return (
-        <div>
-            <div style={{ marginBottom: 24, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                    <h2 style={{ margin: 0 }}>Welcome, {user.full_name}</h2>
-                    <span style={{ color: '#666', textTransform: 'capitalize' }}>
-                        {user.role.replace('_', ' ')} Dashboard
-                    </span>
+    const themeColor = isAdmin ? '#1890ff' : isDean ? '#722ed1' : isHead ? '#13c2c2' : '#52c41a';
+
+    const renderActionSection = () => {
+        if (isAdmin) {
+            return (
+                <div style={{ background: '#e6f7ff', padding: '24px', borderRadius: '12px', border: '1px solid #91d5ff', marginBottom: '24px' }}>
+                    <Row align="middle" gutter={24}>
+                        <Col flex="auto">
+                            <h3 style={{ margin: 0, color: '#0050b3' }}>Outil de Génération Automatique</h3>
+                            <p style={{ margin: 0 }}>Générer un nouvel emploi du temps en respectant les contraintes (Salles, Profeuseurs, Étudiants).</p>
+                        </Col>
+                        <Col>
+                            <Button
+                                type="primary"
+                                size="large"
+                                icon={<RocketOutlined />}
+                                loading={optimizing}
+                                onClick={runOptimization}
+                                style={{ borderRadius: '8px' }}
+                            >
+                                {optimizing ? 'Génération en cours...' : 'Générer l\'EDT Institutional'}
+                            </Button>
+                        </Col>
+                    </Row>
                 </div>
-                {isAdmin && (
-                    <Button
-                        type="primary"
-                        size="large"
-                        icon={optimizing ? <CheckCircleOutlined spin /> : <RocketOutlined />}
-                        onClick={runOptimization}
-                        loading={optimizing}
-                        disabled={optimizing}
-                        style={{ background: 'linear-gradient(45deg, #1890ff, #722ed1)', border: 'none' }}
-                    >
-                        {optimizing ? 'Generating EDT...' : 'Generate New Timetable'}
-                    </Button>
-                )}
+            );
+        }
+        if (isDean) {
+            return (
+                <div style={{ background: '#f9f0ff', padding: '24px', borderRadius: '12px', border: '1px solid #d3adf7', marginBottom: '24px' }}>
+                    <Row align="middle" gutter={24}>
+                        <Col flex="auto">
+                            <h3 style={{ margin: 0, color: '#391085' }}>Approbation Stratégique</h3>
+                            <p style={{ margin: 0 }}>Valider officiellement toutes les planifications approuvées par les départements pour publication.</p>
+                        </Col>
+                        <Col>
+                            <Button
+                                type="primary"
+                                size="large"
+                                icon={<CheckCircleOutlined />}
+                                onClick={async () => {
+                                    try {
+                                        await api.post('/workflow/approve-final');
+                                        message.success('Planning institutionnel validé avec succès !');
+                                        fetchData();
+                                    } catch (err) {
+                                        message.error('Erreur de validation');
+                                    }
+                                }}
+                                style={{ background: '#722ed1', borderColor: '#722ed1', borderRadius: '8px' }}
+                            >
+                                Approuver Tout (Final)
+                            </Button>
+                        </Col>
+                    </Row>
+                </div>
+            );
+        }
+        return null;
+    };
+
+    return (
+        <div style={{ padding: '0 8px' }}>
+            <div style={{ marginBottom: 24 }}>
+                <h2 style={{ margin: 0, fontSize: '24px', color: themeColor }}>Bienvenue, {user.full_name}</h2>
+                <span style={{ color: '#8c8c8c', textTransform: 'capitalize', fontWeight: 500 }}>
+                    Espace {user.role.replace('_', ' ')} — Université d'Excellence
+                </span>
             </div>
+
+            {renderActionSection()}
 
             {isManager && stats && (
                 <>
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         <Col span={6}>
-                            <Card bordered={false} className="stat-card">
-                                <Statistic title="Students" value={stats.total_students} prefix={<UserOutlined />} />
+                            <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
+                                <Statistic title="Total Étudiants" value={stats.total_students} prefix={<UserOutlined style={{ color: themeColor }} />} />
                             </Card>
                         </Col>
                         <Col span={6}>
-                            <Card bordered={false} className="stat-card">
-                                <Statistic title="Professors" value={stats.total_profs} prefix={<UserOutlined />} />
+                            <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
+                                <Statistic title="Total Professeurs" value={stats.total_profs} prefix={<UserOutlined style={{ color: themeColor }} />} />
                             </Card>
                         </Col>
                         <Col span={6}>
-                            <Card bordered={false} className="stat-card">
-                                <Statistic title="Scheduled Exams" value={stats.total_exams} prefix={<BookOutlined />} />
-                            </Card>
-                        </Col>
-                        <Col span={6}>
-                            <Card bordered={false} className="stat-card">
+                            <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                 <Statistic
-                                    title="Avg Room Occupancy"
-                                    value={stats.occupancy_rate}
-                                    suffix="%"
-                                    precision={1}
-                                    valueStyle={{ color: stats.occupancy_rate > 80 ? '#cf1322' : '#3f51b5' }}
-                                    prefix={<PieChartOutlined />}
+                                    title={isDean ? "Taux d'Occupation" : "Examens Planifiés"}
+                                    value={isDean ? stats.occupancy_rate : stats.total_exams}
+                                    suffix={isDean ? "%" : ""}
+                                    precision={isDean ? 1 : 0}
+                                    prefix={isDean ? <PieChartOutlined style={{ color: themeColor }} /> : <BookOutlined style={{ color: themeColor }} />}
                                 />
                             </Card>
                         </Col>
                         <Col span={6}>
-                            <Card bordered={false} className="stat-card">
+                            <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                 <Statistic
-                                    title="Quality Score"
+                                    title="Score de Qualité"
                                     value={stats.quality_score}
                                     suffix="%"
                                     precision={1}
@@ -123,9 +165,9 @@ const Dashboard: React.FC = () => {
                         </Col>
                     </Row>
 
-                    <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
+                    <Row gutter={[16, 16]}>
                         <Col span={isDean ? 8 : 12}>
-                            <Card title={<span><BarChartOutlined /> {isHead ? 'Conflicts per Program' : 'Conflicts per Department'}</span>} bordered={false}>
+                            <Card title={<span><BarChartOutlined /> {isHead ? 'Conflits par Formation' : 'Conflits par Département'}</span>} bordered={false} hoverable>
                                 <div style={{ height: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={isHead ? stats.conflicts_by_program : stats.conflicts_by_dept}>
