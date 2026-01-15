@@ -11,12 +11,18 @@ const MainLayout: React.FC = () => {
     const location = useLocation();
     const [collapsed, setCollapsed] = useState(false);
     const [user, setUser] = useState<any>(null);
+    const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+    useEffect(() => {
+        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
 
     const themeColor = user?.role === 'admin' ? '#1890ff' :
         (user?.role === 'dean' || user?.role === 'vice_dean') ? '#722ed1' :
             user?.role === 'head' ? '#13c2c2' : '#52c41a';
 
-    // Check auth and fetch user
     useEffect(() => {
         const fetchUser = async () => {
             const token = localStorage.getItem('token');
@@ -40,35 +46,32 @@ const MainLayout: React.FC = () => {
         navigate('/login');
     };
 
-
-
     const getMenuItems = (): any[] => {
         if (!user) return [];
-
         const items: any[] = [
             { key: '/', icon: <DashboardOutlined />, label: 'Dashboard', onClick: () => navigate('/') },
-            { key: '/timetable', icon: <CalendarOutlined />, label: 'Timetable', onClick: () => navigate('/timetable') },
+            { key: '/timetable', icon: <CalendarOutlined />, label: 'Calendrier', onClick: () => navigate('/timetable') },
         ];
 
         if (user.role === 'admin') {
             items.push({
                 key: '/settings-group',
                 icon: <SettingOutlined />,
-                label: 'Settings',
+                label: 'Gestion',
                 children: [
-                    { key: '/manage/departments', label: 'Departments', onClick: () => navigate('/manage/departments') },
-                    { key: '/manage/rooms', label: 'Rooms', onClick: () => navigate('/manage/rooms') },
-                    { key: '/manage/programs', label: 'Programs', onClick: () => navigate('/manage/programs') },
+                    { key: '/manage/departments', label: 'Départements', onClick: () => navigate('/manage/departments') },
+                    { key: '/manage/rooms', label: 'Salles', onClick: () => navigate('/manage/rooms') },
+                    { key: '/manage/programs', label: 'Formations', onClick: () => navigate('/manage/programs') },
                     { key: '/manage/modules', label: 'Modules', onClick: () => navigate('/manage/modules') },
-                    { key: '/manage/users', label: 'Users', onClick: () => navigate('/manage/users') },
-                    { key: '/manage/exams', label: 'Exams', onClick: () => navigate('/manage/exams') },
+                    { key: '/manage/users', label: 'Utilisateurs', onClick: () => navigate('/manage/users') },
+                    { key: '/manage/exams', label: 'Examens', onClick: () => navigate('/manage/exams') },
                 ]
             });
         }
 
         if (user.role === 'dean' || user.role === 'vice_dean') {
             items.push(
-                { key: '/manage/users', icon: <UserOutlined />, label: 'User Management', onClick: () => navigate('/manage/users') },
+                { key: '/manage/users', icon: <UserOutlined />, label: 'Utilisateurs', onClick: () => navigate('/manage/users') },
             );
         }
 
@@ -76,36 +79,70 @@ const MainLayout: React.FC = () => {
     };
 
     return (
-        <Layout style={{ minHeight: '100vh' }}>
-            <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
-                <div style={{ height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)', borderRadius: 6 }} />
-                <Menu theme="dark" mode="inline" selectedKeys={[location.pathname]} items={getMenuItems()} />
+        <Layout style={{ minHeight: '100vh', background: 'var(--tech-bg-dark)' }}>
+            <Sider
+                collapsible
+                collapsed={collapsed}
+                onCollapse={setCollapsed}
+                breakpoint="lg"
+                collapsedWidth={isMobile ? 0 : 80}
+                style={{
+                    background: 'rgba(13, 17, 23, 0.95)',
+                    borderRight: '1px solid rgba(255, 255, 255, 0.05)',
+                    zIndex: 100
+                }}
+            >
+                <div style={{ padding: '24px 16px', textAlign: 'center' }}>
+                    <div style={{
+                        fontSize: '20px',
+                        fontWeight: 900,
+                        color: '#fff',
+                        letterSpacing: '1px',
+                        display: collapsed ? 'none' : 'block'
+                    }}>EXAMIFY</div>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: 4, display: collapsed ? 'none' : 'block' }}>V1.0 TECH</div>
+                </div>
+                <Menu
+                    theme="dark"
+                    mode="inline"
+                    selectedKeys={[location.pathname]}
+                    items={getMenuItems()}
+                    style={{ background: 'transparent' }}
+                />
             </Sider>
-            <Layout className="site-layout">
-                <Header style={{ padding: '0 24px', background: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #f0f0f0' }}>
-                    <div style={{ fontSize: '18px', fontWeight: 'bold', color: '#001529' }}>
-                        Portal d'Examens <span style={{ color: '#8c8c8c', fontWeight: 'normal', fontSize: '14px' }}>| {user?.role?.toUpperCase()}</span>
+            <Layout style={{ background: 'transparent' }}>
+                <Header style={{
+                    padding: isMobile ? '0 16px' : '0 24px',
+                    background: 'rgba(5, 8, 15, 0.8)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                }}>
+                    <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 600, color: '#fff' }}>
+                        Portal <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 300 }}>| {user?.role?.replace('_', ' ').toUpperCase()}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', marginRight: 24 }}>
+                        {!isMobile && (
                             <div style={{ textAlign: 'right', marginRight: 12 }}>
-                                <div style={{ fontWeight: 600, lineHeight: '18px' }}>{user?.full_name || 'Chargement...'}</div>
-                                <div style={{ fontSize: '11px', color: '#8c8c8c', textTransform: 'uppercase' }}>{user?.role}</div>
+                                <div style={{ fontSize: '13px', color: '#fff' }}>{user?.full_name}</div>
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Connecté</div>
                             </div>
-                            <Avatar size="large" icon={<UserOutlined />} style={{ backgroundColor: themeColor }} />
-                        </div>
+                        )}
+                        <Avatar
+                            size={isMobile ? "small" : "default"}
+                            icon={<UserOutlined />}
+                            style={{ backgroundColor: themeColor, marginRight: 12 }}
+                        />
                         <Button
                             type="text"
                             icon={<LogoutOutlined />}
                             onClick={handleLogout}
-                            danger
-                        >
-                            Déconnexion
-                        </Button>
+                            style={{ color: 'rgba(255,255,255,0.4)' }}
+                        />
                     </div>
                 </Header>
-                <Content style={{ margin: '16px' }}>
-                    <div style={{ padding: 24, minHeight: 360, background: '#fff', borderRadius: 8 }}>
+                <Content style={{ margin: isMobile ? '8px' : '24px', position: 'relative' }}>
+                    <div style={{ padding: isMobile ? 12 : 24, minHeight: 360, background: 'transparent' }}>
                         <Outlet />
                     </div>
                 </Content>

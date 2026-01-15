@@ -190,22 +190,33 @@ async def get_detailed_conflicts(
         if prof:
             dept_id = prof.department_id
 
-    # 1. Student Conflicts
+    # 1. Student Conflicts (Optimized with Subquery to reduce Join surface)
     student_query = """
+        WITH StudentDateConflicts AS (
+            SELECT 
+                en1.student_id,
+                t1.start_time::DATE as conflict_date
+            FROM timetable_entries t1
+            JOIN exams e1 ON t1.exam_id = e1.id
+            JOIN modules m1 ON e1.module_id = m1.id
+            JOIN enrollments en1 ON m1.id = en1.module_id
+            GROUP BY en1.student_id, t1.start_time::DATE
+            HAVING COUNT(*) > 1
+        )
         SELECT 
-            s.full_name as student_name,
-            t.start_time::DATE as conflict_date,
+            u.full_name as student_name,
+            c.conflict_date,
             string_agg(m.name, ' | ') as conflicting_modules
-        FROM timetable_entries t
-        JOIN exams e ON t.exam_id = e.id
-        JOIN modules m ON e.module_id = m.id
+        FROM StudentDateConflicts c
+        JOIN enrollments en ON c.student_id = en.student_id
+        JOIN modules m ON en.module_id = m.id
+        JOIN exams e ON m.id = e.module_id
+        JOIN timetable_entries t ON e.id = t.exam_id AND t.start_time::DATE = c.conflict_date
+        JOIN students s_profile ON c.student_id = s_profile.id
+        JOIN users u ON s_profile.user_id = u.id
         JOIN programs p ON m.program_id = p.id
-        JOIN enrollments en ON m.id = en.module_id
-        JOIN students s_profile ON en.student_id = s_profile.id
-        JOIN users s ON s_profile.user_id = s.id
         WHERE (:dept_id IS NULL OR p.department_id = :dept_id)
-        GROUP BY s.id, s.full_name, t.start_time::DATE
-        HAVING COUNT(*) > 1
+        GROUP BY u.id, u.full_name, c.conflict_date
     """
     student_res = await db.execute(sa.text(student_query), {"dept_id": dept_id})
     student_conflicts = [

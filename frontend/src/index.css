@@ -1,38 +1,112 @@
 @import 'antd/dist/reset.css';
 
+:root {
+  --tech-bg-dark: #05080f;
+  --tech-bg-card: rgba(13, 17, 23, 0.7);
+  --tech-primary: #1890ff;
+  --tech-accent: #722ed1;
+  --tech-glow: rgba(24, 144, 255, 0.15);
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #1f4037 0%, #99f2c8 100%);
+  background-color: var(--tech-bg-dark);
+  background: radial-gradient(circle at 50% 50%, #0d1117 0%, #05080f 100%);
+  color: var(--text-primary);
   min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Floating Tech Objects */
+body::before, body::after {
+  content: '';
+  position: fixed;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  filter: blur(80px);
+  z-index: -1;
+  opacity: 0.15;
+}
+
+body::before {
+  background: var(--tech-primary);
+  top: -100px;
+  right: -100px;
+}
+
+body::after {
+  background: var(--tech-accent);
+  bottom: -100px;
+  left: -100px;
 }
 
 /* Glassmorphism for Cards */
 .glass-card {
-    background: rgba(255, 255, 255, 0.8) !important;
-    backdrop-filter: blur(10px);
-    border-radius: 12px !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15) !important;
+  background: var(--tech-bg-card) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border-radius: 12px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4) !important;
 }
 
 .ant-layout {
-    background: transparent !important;
+  background: transparent !important;
+}
+
+.ant-layout-header {
+  background: rgba(5, 8, 15, 0.8) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
 .ant-layout-sider {
-    background: rgba(0, 21, 41, 0.7) !important;
-    backdrop-filter: blur(20px);
+  background: rgba(13, 17, 23, 0.9) !important;
+  border-right: 1px solid rgba(255, 255, 255, 0.1) !important;
 }
 
-.ant-menu-dark {
-    background: transparent !important;
+.ant-card {
+  background: var(--tech-bg-card) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
-.ant-statistic-title {
-    color: #555 !important;
+.ant-card-head {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-statistic-title, .ant-statistic-content {
+  color: var(--text-primary) !important;
+}
+
+.ant-table {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+}
+
+.ant-table-thead > tr > th {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: var(--text-primary) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.ant-table-tbody > tr > td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+.ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.02) !important;
+}
+
+/* Responsive Table */
+@media screen and (max-width: 768px) {
+  .ant-table-container {
+    overflow-x: auto;
+  }
 }

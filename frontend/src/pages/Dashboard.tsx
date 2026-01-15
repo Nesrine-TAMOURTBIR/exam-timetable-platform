@@ -173,14 +173,14 @@ const Dashboard: React.FC = () => {
                             <Col span={8}>
                                 <Card bordered={false} hoverable style={{ borderLeft: `4px solid #722ed1`, background: '#f9f0ff' }}>
                                     <Statistic
-                                        title="Gain d'Optimisation (AI)"
+                                        title="Gain de Performance"
                                         value={stats.optimization_gain}
                                         suffix="%"
                                         precision={1}
                                         valueStyle={{ color: '#722ed1' }}
                                         prefix={<RocketOutlined />}
                                     />
-                                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Conflits résolus par rapport au planning naïf</div>
+                                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Diminution des collisions par rapport au planning brut</div>
                                 </Card>
                             </Col>
                         )}
@@ -218,7 +218,7 @@ const Dashboard: React.FC = () => {
                         </Col>
                         <Col span={isDean ? 8 : 12}>
                             <Card title={<span><CheckCircleOutlined /> État des Validations (Doyen)</span>} bordered={false} className="glass-card">
-                                <div style={{ height: 300 }}>
+                                <div style={{ height: 300, minHeight: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie

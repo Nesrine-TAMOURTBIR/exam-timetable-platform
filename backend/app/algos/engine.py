@@ -117,53 +117,49 @@ class OptimizationEngine:
             student_count = len(self.enrollments.get(exam.id, []))
             
             # Recherche du meilleur créneau (Heuristique First-Fit-Decreasing)
+            # A. Optimisation : Calcul des jours bloqués pour cet examen (O(Neighbors) once)
+            blocked_days = {self.solution[nid][0] for nid in self.conflicts.get(exam.id, []) if nid in self.solution}
+            
             for day, slot in slots:
-                # A. CONTRAINTE ÉTUDIANT : Max 1 examen par jour
-                student_conflict = False
-                neighbors = self.conflicts.get(exam.id, [])
-                for neighbor_id in neighbors:
-                    if neighbor_id in self.solution:
-                        n_day, n_slot, _, _ = self.solution[neighbor_id]
-                        if n_day == day:
-                            student_conflict = True
-                            break
-                if student_conflict: continue
+                if day in blocked_days: continue
 
                 # B. CONTRAINTE SALLE : Capacité et Disponibilité
-                selected_room = None
-                # Optimisation Soft : On choisit la salle avec le MOINS de gaspillage (Best-Fit)
-                # On trie par capacité ascendante, et on filtre celles qui sont >= student_count
+                usage_key = (day, slot)
+                if usage_key not in room_usage: room_usage[usage_key] = set()
+                
                 eligible_rooms = sorted([r for r in self.rooms if r.capacity >= student_count], key=lambda r: r.capacity)
-                for room in eligible_rooms:
-                    if (day, slot, room.id) not in room_usage:
-                        # On a trouvé la salle la plus "serrée" disponible
-                        selected_room = room
-                        break
+                selected_room = next((r for r in eligible_rooms if r.id not in room_usage[usage_key]), None)
                 if not selected_room: continue
 
                 # C. CONTRAINTE PROFESSEUR : Charge et Disponibilité
-                selected_prof = None
-                eligible_profs = []
-                for p in self.profs:
-                    if (day, slot, p.id) in prof_usage: continue
-                    if prof_daily_counts.get((day, p.id), 0) >= 3: continue
-                    eligible_profs.append(p)
-                
-                if not eligible_profs: continue
-                
-                # Équité 2.0 : Priorité au département puis à celui qui a le moins de charge totale
+                if usage_key not in prof_usage: prof_usage[usage_key] = set()
                 exam_dept_id = exam.module.program.department_id if exam.module and exam.module.program else -1
-                eligible_profs.sort(key=lambda p: (
-                    0 if p.department_id == exam_dept_id else 1,
-                    prof_total_counts.get(p.id, 0)
-                ))
                 
-                selected_prof = eligible_profs[0]
+                selected_prof = None
+                # Picking available prof with lowest load and dept priority
+                for p in self.profs:
+                    if p.id in prof_usage[usage_key]: continue
+                    if prof_daily_counts.get((day, p.id), 0) >= 3: continue
+                    
+                    if selected_prof is None:
+                        selected_prof = p
+                    else:
+                        # Dept priority
+                        p_is_dept = (p.department_id == exam_dept_id)
+                        s_is_dept = (selected_prof.department_id == exam_dept_id)
+                        
+                        if p_is_dept and not s_is_dept:
+                            selected_prof = p
+                        elif p_is_dept == s_is_dept:
+                            if prof_total_counts[p.id] < prof_total_counts[selected_prof.id]:
+                                selected_prof = p
+                
+                if not selected_prof: continue
 
                 # VALIDATION FINALE & AFFECTATION
                 self.solution[exam.id] = (day, slot, selected_room.id, selected_prof.id)
-                room_usage[(day, slot, selected_room.id)] = exam.id
-                prof_usage[(day, slot, selected_prof.id)] = exam.id
+                room_usage[usage_key].add(selected_room.id)
+                prof_usage[usage_key].add(selected_prof.id)
                 prof_daily_counts[(day, selected_prof.id)] = prof_daily_counts.get((day, selected_prof.id), 0) + 1
                 prof_total_counts[selected_prof.id] += 1
                 assigned = True
