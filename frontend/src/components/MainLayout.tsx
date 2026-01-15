@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Layout, Menu, Button, Avatar } from 'antd';
-import { UserOutlined, LogoutOutlined, CalendarOutlined, DashboardOutlined, SettingOutlined } from '@ant-design/icons';
+import { UserOutlined, LogoutOutlined, CalendarOutlined, DashboardOutlined, SettingOutlined, MenuOutlined, MenuFoldOutlined } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import api from '../api/client';
 
@@ -80,69 +80,121 @@ const MainLayout: React.FC = () => {
 
     return (
         <Layout style={{ minHeight: '100vh', background: 'var(--tech-bg-dark)' }}>
+            {/* Animated Background Blobs */}
+            <div className="tech-bg-anim">
+                <div className="blob blob-1"></div>
+                <div className="blob blob-2"></div>
+            </div>
+
             <Sider
                 collapsible
                 collapsed={collapsed}
                 onCollapse={setCollapsed}
-                breakpoint="lg"
+                trigger={null} // We'll move the trigger to the top
+                width={260}
                 collapsedWidth={isMobile ? 0 : 80}
-                style={{
-                    background: 'rgba(13, 17, 23, 0.95)',
-                    borderRight: '1px solid rgba(255, 255, 255, 0.05)',
-                    zIndex: 100
-                }}
+                className="ant-layout-sider"
             >
-                <div style={{ padding: '24px 16px', textAlign: 'center' }}>
-                    <div style={{
-                        fontSize: '20px',
-                        fontWeight: 900,
-                        color: '#fff',
-                        letterSpacing: '1px',
-                        display: collapsed ? 'none' : 'block'
-                    }}>EXAMIFY</div>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: 4, display: collapsed ? 'none' : 'block' }}>V1.0 TECH</div>
-                </div>
-                <Menu
-                    theme="dark"
-                    mode="inline"
-                    selectedKeys={[location.pathname]}
-                    items={getMenuItems()}
-                    style={{ background: 'transparent' }}
-                />
-            </Sider>
-            <Layout style={{ background: 'transparent' }}>
-                <Header style={{
-                    padding: isMobile ? '0 16px' : '0 24px',
-                    background: 'rgba(5, 8, 15, 0.8)',
+                <div style={{
+                    padding: '16px',
                     display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center'
+                    flexDirection: 'column',
+                    height: '100%',
+                    position: 'relative'
+                }}>
+                    {/* Top Section with Branding & Trigger */}
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: collapsed ? 'center' : 'space-between',
+                        marginBottom: 24,
+                        paddingBottom: 16,
+                        borderBottom: '1px solid rgba(255,255,255,0.05)'
+                    }}>
+                        {!collapsed && (
+                            <div style={{ textAlign: 'left' }}>
+                                <div style={{ fontSize: '18px', fontWeight: 900, color: '#fff', letterSpacing: '2px' }}>EXAMIFY</div>
+                                <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)' }}>V1.0 TECH</div>
+                            </div>
+                        )}
+                        <Button
+                            type="text"
+                            icon={collapsed ? <MenuOutlined /> : <MenuFoldOutlined />}
+                            onClick={() => setCollapsed(!collapsed)}
+                            style={{ color: '#fff' }}
+                        />
+                    </div>
+
+                    <div style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+                        <Menu
+                            theme="dark"
+                            mode="inline"
+                            selectedKeys={[location.pathname]}
+                            items={getMenuItems()}
+                            style={{ background: 'transparent', border: 'none' }}
+                        />
+                    </div>
+
+                    {!collapsed && (
+                        <div style={{
+                            paddingTop: 16,
+                            borderTop: '1px solid rgba(255,255,255,0.05)',
+                            textAlign: 'center',
+                            opacity: 0.4,
+                            fontSize: '10px'
+                        }}>
+                            University Portal v1.0
+                        </div>
+                    )}
+                </div>
+            </Sider>
+
+            <Layout className={`layout-content-offset ${collapsed ? 'collapsed' : ''}`} style={{ background: 'transparent' }}>
+                <Header style={{
+                    left: isMobile ? 0 : (collapsed ? '80px' : '260px'),
+                    width: isMobile ? '100%' : `calc(100% - ${collapsed ? '80px' : '260px'})`
                 }}>
                     <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 600, color: '#fff' }}>
                         Portal <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 300 }}>| {user?.role?.replace('_', ' ').toUpperCase()}</span>
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center' }}>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
                         {!isMobile && (
-                            <div style={{ textAlign: 'right', marginRight: 12 }}>
-                                <div style={{ fontSize: '13px', color: '#fff' }}>{user?.full_name}</div>
-                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase' }}>Connecté</div>
+                            <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                                <span style={{ fontSize: '13px', color: '#fff', lineHeight: 1.2, fontWeight: 500 }}>{user?.full_name}</span>
+                                <span style={{ fontSize: '10px', color: 'var(--tech-primary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '2px', fontWeight: 700 }}>
+                                    ● Connecté
+                                </span>
                             </div>
                         )}
-                        <Avatar
-                            size={isMobile ? "small" : "default"}
-                            icon={<UserOutlined />}
-                            style={{ backgroundColor: themeColor, marginRight: 12 }}
-                        />
-                        <Button
-                            type="text"
-                            icon={<LogoutOutlined />}
-                            onClick={handleLogout}
-                            style={{ color: 'rgba(255,255,255,0.4)' }}
-                        />
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <Avatar
+                                size={isMobile ? "small" : "default"}
+                                icon={<UserOutlined />}
+                                style={{
+                                    backgroundColor: themeColor,
+                                    boxShadow: `0 0 15px ${themeColor}66`,
+                                    border: '1px solid rgba(255,255,255,0.2)'
+                                }}
+                            />
+                            <Button
+                                type="text"
+                                icon={<LogoutOutlined />}
+                                onClick={handleLogout}
+                                className="logout-btn"
+                                style={{ color: 'rgba(255,255,255,0.4)', fontSize: '18px' }}
+                            />
+                        </div>
                     </div>
                 </Header>
-                <Content style={{ margin: isMobile ? '8px' : '24px', position: 'relative' }}>
-                    <div style={{ padding: isMobile ? 12 : 24, minHeight: 360, background: 'transparent' }}>
+
+                <Content style={{
+                    padding: isMobile ? '16px' : '32px',
+                    minHeight: 'calc(100vh - var(--header-height))',
+                    background: 'transparent'
+                }}>
+                    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
                         <Outlet />
                     </div>
                 </Content>

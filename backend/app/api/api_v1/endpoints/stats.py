@@ -134,7 +134,7 @@ async def get_dashboard_kpi(
             prog_conf_res = await db.execute(sa.text(prog_conflict_query), {"dept_id": prof.department_id})
             stats["conflicts_by_program"] = [{"name": row[0], "count": row[1]} for row in prog_conf_res.fetchall()]
 
-    # 5. Validation Workflow Summary (Dean/Vice-Dean Strategic KPIs)
+    # 7. Validation Workflow Summary (Dean/Vice-Dean Strategic KPIs)
     status_query = select(TimetableEntry.status, func.count(TimetableEntry.id)).group_by(TimetableEntry.status)
     status_res = await db.execute(status_query)
     stats["validation_status"] = {row[0]: row[1] for row in status_res.all()}
@@ -144,7 +144,7 @@ async def get_dashboard_kpi(
         if s not in stats["validation_status"]:
             stats["validation_status"][s] = 0
 
-    # 6. Global Room Occupancy & Waste
+    # 8. Room Occupancy & Waste
     occ_query = """
         SELECT 
             AVG(CAST(en_counts.cnt AS NUMERIC) / r.capacity * 100) as avg_rate,
@@ -161,7 +161,41 @@ async def get_dashboard_kpi(
     stats["avg_unused_seats"] = float(row[1] or 0)
     stats["room_waste_pct"] = max(0, 100 - stats["occupancy_rate"])
 
-    # 7. Quality & Optimization Impact
+    # 9. Room Usage Distribution (Chart)
+    room_usage_query = """
+        SELECT r.name, COUNT(t.id) as usage_count
+        FROM rooms r
+        JOIN timetable_entries t ON r.id = t.room_id
+        GROUP BY r.name
+        ORDER BY usage_count DESC
+        LIMIT 10;
+    """
+    room_usage_res = await db.execute(sa.text(room_usage_query))
+    stats["room_occupancy"] = [{"name": row[0], "rate": row[1]} for row in room_usage_res.fetchall()]
+
+    # 10. Exams per Day (Chart)
+    exams_day_query = """
+        SELECT start_time::DATE as day, COUNT(*) as cnt
+        FROM timetable_entries
+        GROUP BY start_time::DATE
+        ORDER BY day;
+    """
+    day_res = await db.execute(sa.text(exams_day_query))
+    stats["exams_by_day"] = [{"date": str(row[0]), "count": row[1]} for row in day_res.fetchall()]
+
+    # 11. Professor Load (Chart)
+    prof_load_query = """
+        SELECT u.full_name, COUNT(t.id) as load
+        FROM timetable_entries t
+        JOIN users u ON t.supervisor_id = u.id
+        GROUP BY u.full_name
+        ORDER BY load DESC
+        LIMIT 10;
+    """
+    prof_res = await db.execute(sa.text(prof_load_query))
+    stats["prof_load"] = [{"name": row[0], "count": row[1]} for row in prof_res.fetchall()]
+
+    # 12. Quality Score
     total_entries = stats["total_exams"]
     if total_entries > 0:
         total_conflicts = sum(d["count"] for d in stats.get("conflicts_by_dept", []))

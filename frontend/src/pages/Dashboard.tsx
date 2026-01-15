@@ -284,7 +284,7 @@ const Dashboard: React.FC = () => {
                         )}
                         <Col span={isAdmin ? 12 : 24}>
                             <Card title={<span><LineChartOutlined /> Professor Load {isHead ? '(Our Dept)' : '(Top 10 Institutional)'}</span>} bordered={false}>
-                                <div style={{ height: 300 }}>
+                                <div style={{ height: 300, width: '100%' }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart data={stats.prof_load}>
                                             <CartesianGrid strokeDasharray="3 3" />

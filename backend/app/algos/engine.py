@@ -93,10 +93,16 @@ class OptimizationEngine:
         3. Disponibilité des salles et des professeurs
         4. Charge de surveillance (Max 3 / jour, répartition équitable)
         """
-        print("🚀 Lancement de l'optimisation des ressources...")
+        print("🚀 Lancement de l'optimisation des ressources (Turbo Mode)...")
         
+        start_time = datetime.now()
+        TIMEOUT_SECONDS = 45  # Stricter timeout to prevent backend hang
+
         # Tri des examens par difficulté (nombre de conflits potentiels)
         sorted_exams = sorted(self.exams, key=lambda e: len(self.conflicts.get(e.id, [])), reverse=True)
+        
+        # Pre-sort rooms by capacity once (optimization)
+        self.rooms.sort(key=lambda r: r.capacity)
         
         # Configuration temporelle
         DAYS = 12
@@ -113,6 +119,12 @@ class OptimizationEngine:
         total_exams = len(sorted_exams)
         
         for idx, exam in enumerate(sorted_exams):
+            # Check for timeout
+            if (datetime.now() - start_time).total_seconds() > TIMEOUT_SECONDS:
+                print(f"⚠️ Timeout atteint ({TIMEOUT_SECONDS}s). Arrêt de l'optimisation.")
+                unassigned.extend([e.id for e in sorted_exams[idx:]])
+                break
+
             assigned = False
             student_count = len(self.enrollments.get(exam.id, []))
             
@@ -120,6 +132,9 @@ class OptimizationEngine:
             # A. Optimisation : Calcul des jours bloqués pour cet examen (O(Neighbors) once)
             blocked_days = {self.solution[nid][0] for nid in self.conflicts.get(exam.id, []) if nid in self.solution}
             
+            # Filter rooms that fit capacity once per exam (optimization)
+            valid_rooms = [r for r in self.rooms if r.capacity >= student_count]
+
             for day, slot in slots:
                 if day in blocked_days: continue
 
@@ -127,33 +142,39 @@ class OptimizationEngine:
                 usage_key = (day, slot)
                 if usage_key not in room_usage: room_usage[usage_key] = set()
                 
-                eligible_rooms = sorted([r for r in self.rooms if r.capacity >= student_count], key=lambda r: r.capacity)
-                selected_room = next((r for r in eligible_rooms if r.id not in room_usage[usage_key]), None)
+                # Check rooms, since they are sorted by capacity, we pick the smallest fit
+                selected_room = next((r for r in valid_rooms if r.id not in room_usage[usage_key]), None)
                 if not selected_room: continue
 
                 # C. CONTRAINTE PROFESSEUR : Charge et Disponibilité
                 if usage_key not in prof_usage: prof_usage[usage_key] = set()
-                exam_dept_id = exam.module.program.department_id if exam.module and exam.module.program else -1
                 
                 selected_prof = None
-                # Picking available prof with lowest load and dept priority
-                for p in self.profs:
-                    if p.id in prof_usage[usage_key]: continue
-                    if prof_daily_counts.get((day, p.id), 0) >= 3: continue
-                    
-                    if selected_prof is None:
-                        selected_prof = p
-                    else:
-                        # Dept priority
-                        p_is_dept = (p.department_id == exam_dept_id)
-                        s_is_dept = (selected_prof.department_id == exam_dept_id)
-                        
-                        if p_is_dept and not s_is_dept:
-                            selected_prof = p
-                        elif p_is_dept == s_is_dept:
-                            if prof_total_counts[p.id] < prof_total_counts[selected_prof.id]:
-                                selected_prof = p
+                exam_dept_id = exam.module.program.department_id if exam.module and exam.module.program else -1
                 
+                # Optimized Prof Selection: linear scan is unavoidable but fast enough if N_Profs < 500
+                # We can optimization by skipping heavily loaded profs early? No, need fairness.
+                # Just loop.
+                candidate_profs = [p for p in self.profs if p.id not in prof_usage[usage_key] and prof_daily_counts.get((day, p.id), 0) < 3]
+
+                if not candidate_profs: continue
+                
+                # Select best candidate
+                best_p = None
+                best_score = float('inf') # Lower is better (count)
+                
+                for p in candidate_profs:
+                    score = prof_total_counts[p.id]
+                    # Bonus for dept match (reduce effective score)
+                    if p.department_id == exam_dept_id:
+                        score -= 5 # Prioritize dept members significantly
+                    
+                    if score < best_score:
+                        best_score = score
+                        best_p = p
+                
+                selected_prof = best_p
+
                 if not selected_prof: continue
 
                 # VALIDATION FINALE & AFFECTATION

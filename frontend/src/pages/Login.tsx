@@ -38,31 +38,47 @@ const Login: React.FC = () => {
             background: 'var(--tech-bg-dark)',
             overflow: 'hidden'
         }}>
-            {/* Background Tech Elements */}
-            <div className="tech-blob" style={{ position: 'absolute', top: '15%', left: '10%', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }} />
-            <div className="tech-cross" style={{ position: 'absolute', bottom: '20%', right: '15%', fontSize: '40px', color: 'rgba(255,255,255,0.05)', fontWeight: 100 }}>+</div>
-
-            <div style={{ marginBottom: 40, textAlign: 'center', zIndex: 1 }}>
-                <Title level={1} style={{ color: '#fff', margin: 0, letterSpacing: '2px', fontWeight: 700 }}>EXAMIFY</Title>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '12px', textTransform: 'uppercase', marginTop: 8 }}>Plateforme Institutionnelle</div>
+            {/* Animated Background Blobs for "Wow" Factor */}
+            <div className="tech-bg-anim">
+                <div className="blob blob-1"></div>
+                <div className="blob blob-2" style={{ background: 'radial-gradient(circle, var(--tech-accent) 0%, transparent 60%)' }}></div>
             </div>
 
-            <Card className="glass-card" style={{ width: '90%', maxWidth: '400px', border: 'none', zIndex: 1 }}>
+            <div style={{ marginBottom: 40, textAlign: 'center', zIndex: 1, animation: 'fadeInDown 1s ease' }}>
+                <Title level={1} style={{ color: '#fff', margin: 0, letterSpacing: '4px', fontWeight: 900 }}>EXAMIFY</Title>
+                <div style={{ color: 'var(--tech-primary)', fontSize: '10px', textTransform: 'uppercase', marginTop: 8, letterSpacing: '2px', fontWeight: 600 }}>
+                    UNIVERSITY SCHEDULING SYSTEM
+                </div>
+            </div>
+
+            <Card className="glass-card" style={{ width: '90%', maxWidth: '420px', border: 'none', zIndex: 1, padding: '24px 12px' }}>
                 <Form onFinish={onFinish} size="large" layout="vertical">
                     <Form.Item name="email" rules={[{ required: true }]}>
                         <Input
                             placeholder="ADRESSE EMAIL"
-                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px' }}
+                            className="tech-input"
+                            style={{
+                                height: '50px',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                color: '#fff'
+                            }}
                         />
                     </Form.Item>
                     <Form.Item name="password" rules={[{ required: true }]}>
                         <Input.Password
                             placeholder="MOT DE PASSE"
-                            style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: '#fff', borderRadius: '4px' }}
+                            className="tech-input"
+                            style={{
+                                height: '50px',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid rgba(255,255,255,0.08)',
+                                color: '#fff'
+                            }}
                         />
                     </Form.Item>
 
-                    <Form.Item style={{ marginBottom: 12 }}>
+                    <Form.Item style={{ marginTop: 24, marginBottom: 12 }}>
                         <Button
                             type="primary"
                             htmlType="submit"
@@ -72,28 +88,35 @@ const Login: React.FC = () => {
                                 background: '#fff',
                                 color: '#000',
                                 border: 'none',
-                                height: '48px',
-                                fontWeight: 700,
-                                borderRadius: '24px'
+                                height: '54px',
+                                fontWeight: 800,
+                                borderRadius: '27px',
+                                fontSize: '14px',
+                                letterSpacing: '1px',
+                                boxShadow: '0 4px 15px rgba(255,255,255,0.2)'
                             }}
                         >
-                            LOG IN <RocketOutlined style={{ marginLeft: 8 }} />
+                            ACCÉDER AU PORTAIL <RocketOutlined style={{ marginLeft: 12 }} />
                         </Button>
                     </Form.Item>
 
                     <div style={{ textAlign: 'center' }}>
-                        <Button type="link" style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
-                            IDENTIFIANTS OUBLIÉS ?
+                        <Button type="link" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', letterSpacing: '0.5px' }}>
+                            SUPPORT TECHNIQUE / IDENTIFIANTS OUBLIÉS
                         </Button>
-                    </div>
-
-                    <div style={{ marginTop: 32, borderTop: '1px solid rgba(255,255,255,0.1)', paddingTop: 16 }}>
-                        <p style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', textAlign: 'center', margin: 0 }}>
-                            Accès restreint aux membres de l'université
-                        </p>
                     </div>
                 </Form>
             </Card>
+
+            <div style={{
+                position: 'absolute',
+                bottom: '20px',
+                color: 'rgba(255,255,255,0.2)',
+                fontSize: '9px',
+                letterSpacing: '1px'
+            }}>
+                V1.0.4-RELEASE • SECURITY HARDENED
+            </div>
         </div>
     );
 };
