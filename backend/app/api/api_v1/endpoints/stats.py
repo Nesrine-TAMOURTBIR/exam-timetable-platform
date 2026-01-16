@@ -224,8 +224,15 @@ async def get_detailed_conflicts(
         if prof:
             dept_id = prof.department_id
 
-    # 1. Student Conflicts (Optimized with Subquery to reduce Join surface)
-    student_query = """
+    # 1. Student Conflicts
+    # Construct WHERE clause dynamically to avoid passing None param that might confuse asyncpg in raw SQL
+    dept_filter = ""
+    params = {}
+    if dept_id is not None:
+        dept_filter = "WHERE p.department_id = :dept_id"
+        params["dept_id"] = dept_id
+    
+    student_query = f"""
         WITH StudentDateConflicts AS (
             SELECT 
                 en1.student_id,
@@ -249,17 +256,22 @@ async def get_detailed_conflicts(
         JOIN students s_profile ON c.student_id = s_profile.id
         JOIN users u ON s_profile.user_id = u.id
         JOIN programs p ON m.program_id = p.id
-        WHERE (:dept_id IS NULL OR p.department_id = :dept_id)
+        {dept_filter}
         GROUP BY u.id, u.full_name, c.conflict_date
     """
-    student_res = await db.execute(sa.text(student_query), {"dept_id": dept_id})
+    student_res = await db.execute(sa.text(student_query), params)
     student_conflicts = [
         {"type": "Étudiant (Multi-Exam)", "target": row[0], "detail": f"Date: {row[1]} | Modules: {row[2]}"}
         for row in student_res.fetchall()
     ]
 
     # 2. Room Capacity Conflicts
-    room_query = """
+    room_filter = ""
+    if dept_id is not None:
+        room_filter = "AND p.department_id = :dept_id"
+        # params already has dept_id if needed
+
+    room_query = f"""
         SELECT 
             r.name as room_name,
             m.name as module_name,
@@ -272,9 +284,9 @@ async def get_detailed_conflicts(
         JOIN programs p ON m.program_id = p.id
         JOIN (SELECT module_id, COUNT(*) as cnt FROM enrollments GROUP BY module_id) en_counts ON e.module_id = en_counts.module_id
         WHERE en_counts.cnt > r.capacity
-        AND (:dept_id IS NULL OR p.department_id = :dept_id)
+        {room_filter}
     """
-    room_res = await db.execute(sa.text(room_query), {"dept_id": dept_id})
+    room_res = await db.execute(sa.text(room_query), params)
     room_conflicts = [
         {"type": "Salle (Surcharge)", "target": row[0], "detail": f"Module: {row[1]} | Inscrits: {row[2]} > Capacité: {row[3]}"}
         for row in room_res.fetchall()
