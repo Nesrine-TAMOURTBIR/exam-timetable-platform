@@ -36,15 +36,12 @@ if firebase_url:
 # TODO: Restrict to specific origins in production by setting ALLOW_ALL_ORIGINS=false
 allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "true").lower() != "false"
 
-# FIX: Wildcard '*' with allow_credentials=True is invalid. We must use the list.
+# FIX: Use Wildcard '*' but DISABLE credentials to be spec-compliant.
+# Since we use Bearer Tokens (Headers) and not Cookies, this is safe and easiest.
 app.add_middleware(
     CORSMiddleware,
-    # If allow_all_origins is True, we construct a pattern allowing all, 
-    # but for credentials we really should be specific.
-    # Let's use the explicit list which includes the Firebase URL.
-    allow_origins=allowed_origins_list, 
-    allow_origin_regex="https://.*\.web\.app" if allow_all_origins else None, # Fallback for preview URLs
-    allow_credentials=True,
+    allow_origins=["*"], 
+    allow_credentials=False, # Disable credentials to allow wildcard
     allow_methods=["*"],
     allow_headers=["*"],
 )
