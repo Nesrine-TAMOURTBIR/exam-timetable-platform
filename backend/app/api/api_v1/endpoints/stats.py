@@ -96,7 +96,7 @@ async def get_dashboard_kpi(
             JOIN modules m1 ON e1.module_id = m1.id
             JOIN enrollments en1 ON m1.id = en1.module_id
             JOIN students s1 ON en1.student_id = s1.id
-            GROUP BY s1.id, t1.start_time::DATE, t1.exam_id
+            GROUP BY s1.id, CAST(t1.start_time AS DATE), t1.exam_id
             HAVING COUNT(*) > 1
         ) conflicts ON t.exam_id = conflicts.exam_id
         GROUP BY d.name;
@@ -121,7 +121,7 @@ async def get_dashboard_kpi(
                 JOIN modules m1 ON e1.module_id = m1.id
                 JOIN enrollments en1 ON m1.id = en1.module_id
                 JOIN students s1 ON en1.student_id = s1.id
-                GROUP BY s1.id, t1.start_time::DATE, t1.exam_id
+                GROUP BY s1.id, CAST(t1.start_time AS DATE), t1.exam_id
                 HAVING COUNT(*) > 1
             ) conflicts ON t.exam_id = conflicts.exam_id
             WHERE p.department_id = :dept_id
@@ -175,9 +175,9 @@ async def get_dashboard_kpi(
 
     # 10. Exams per Day (Chart)
     exams_day_query = """
-        SELECT start_time::DATE as day, COUNT(*) as cnt
+        SELECT CAST(start_time AS DATE) as day, COUNT(*) as cnt
         FROM timetable_entries
-        GROUP BY start_time::DATE
+        GROUP BY CAST(start_time AS DATE)
         ORDER BY day;
     """
     day_res = await db.execute(sa.text(exams_day_query))
@@ -229,12 +229,12 @@ async def get_detailed_conflicts(
         WITH StudentDateConflicts AS (
             SELECT 
                 en1.student_id,
-                t1.start_time::DATE as conflict_date
+                CAST(t1.start_time AS DATE) as conflict_date
             FROM timetable_entries t1
             JOIN exams e1 ON t1.exam_id = e1.id
             JOIN modules m1 ON e1.module_id = m1.id
             JOIN enrollments en1 ON m1.id = en1.module_id
-            GROUP BY en1.student_id, t1.start_time::DATE
+            GROUP BY en1.student_id, CAST(t1.start_time AS DATE)
             HAVING COUNT(*) > 1
         )
         SELECT 
@@ -245,7 +245,7 @@ async def get_detailed_conflicts(
         JOIN enrollments en ON c.student_id = en.student_id
         JOIN modules m ON en.module_id = m.id
         JOIN exams e ON m.id = e.module_id
-        JOIN timetable_entries t ON e.id = t.exam_id AND t.start_time::DATE = c.conflict_date
+        JOIN timetable_entries t ON e.id = t.exam_id AND CAST(t.start_time AS DATE) = c.conflict_date
         JOIN students s_profile ON c.student_id = s_profile.id
         JOIN users u ON s_profile.user_id = u.id
         JOIN programs p ON m.program_id = p.id
