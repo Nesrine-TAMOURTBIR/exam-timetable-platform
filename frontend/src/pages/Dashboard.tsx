@@ -12,6 +12,7 @@ const Dashboard: React.FC = () => {
     const [stats, setStats] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [detailedConflicts, setDetailedConflicts] = useState<any[]>([]);
 
     useEffect(() => {
@@ -19,6 +20,8 @@ const Dashboard: React.FC = () => {
     }, []);
 
     const fetchData = async () => {
+        setLoading(true);
+        setError(null);
         try {
             const userRes = await api.get('/login/me');
             setUser(userRes.data);
@@ -32,11 +35,27 @@ const Dashboard: React.FC = () => {
                     setDetailedConflicts(confRes.data);
                 }
             }
-        } catch (err) {
-            console.error(err);
-            message.error("Failed to load dashboard data");
+        } catch (err: any) {
+            console.error("Dashboard Load Error:", err);
+            setError(err.message || "Impossible de charger les données. Vérifiez votre connexion ou le statut du serveur.");
+            message.error("Erreur de chargement des données");
         } finally {
             setLoading(false);
+        }
+    };
+
+    const [generatingDraft, setGeneratingDraft] = useState(false);
+
+    const runDraft = async () => {
+        setGeneratingDraft(true);
+        try {
+            await api.post('/optimize/draft');
+            message.success('Ébauche générée avec succès !');
+            fetchData();
+        } catch (err: any) {
+            message.error('Erreur lors de la génération de l\'ébauche');
+        } finally {
+            setGeneratingDraft(false);
         }
     };
 
@@ -44,7 +63,7 @@ const Dashboard: React.FC = () => {
         setOptimizing(true);
         try {
             await api.post('/optimize/run');
-            message.success('Timetable generated successfully!');
+            message.success('Optimisation terminée !');
             fetchData();
         } catch (err: any) {
             message.error('Optimization failed: ' + (err.response?.data?.detail || err.message));
@@ -53,8 +72,31 @@ const Dashboard: React.FC = () => {
         }
     };
 
-    if (loading) return <div style={{ padding: 24, textAlign: 'center' }}>Loading Dashboard...</div>;
-    if (!user) return <div style={{ padding: 24, textAlign: 'center' }}>Please log in.</div>;
+    if (loading) return (
+        <div style={{ padding: '48px', textAlign: 'center', color: '#fff' }}>
+            <div className="spinner" style={{ marginBottom: 16 }}></div>
+            <h3 style={{ color: '#fff' }}>Chargement du Dashboard...</h3>
+        </div>
+    );
+
+    if (error) return (
+        <div style={{ padding: '48px', textAlign: 'center', color: '#fff' }}>
+            <Alert
+                message="Erreur de Connexion"
+                description={error}
+                type="error"
+                showIcon
+                action={
+                    <Button size="small" type="primary" danger onClick={fetchData}>
+                        Réessayer
+                    </Button>
+                }
+                style={{ maxWidth: 500, margin: '0 auto' }}
+            />
+        </div>
+    );
+
+    if (!user) return <div style={{ padding: 24, textAlign: 'center', color: '#fff' }}>Veuillez vous reconnecter.</div>;
 
     const isDean = ['dean', 'vice_dean'].includes(user.role);
     const isAdmin = user.role === 'admin';
@@ -70,18 +112,29 @@ const Dashboard: React.FC = () => {
                     <Row align="middle" gutter={24}>
                         <Col flex="auto">
                             <h3 style={{ margin: 0, color: '#0050b3' }}>Outil de Génération Automatique</h3>
-                            <p style={{ margin: 0 }}>Générer un nouvel emploi du temps en respectant les contraintes (Salles, Profeuseurs, Étudiants).</p>
+                            <p style={{ margin: 0 }}>Générer un nouvel emploi du temps. Commencez par une ébauche rapide, puis optimisez.</p>
                         </Col>
-                        <Col>
+                        <Col style={{ display: 'flex', gap: '12px' }}>
+                            <Button
+                                size="large"
+                                icon={<RocketOutlined />}
+                                loading={generatingDraft}
+                                disabled={optimizing}
+                                onClick={runDraft}
+                                style={{ borderRadius: '8px' }}
+                            >
+                                {generatingDraft ? 'Génération...' : 'Générer Ébauche (Rapide)'}
+                            </Button>
                             <Button
                                 type="primary"
                                 size="large"
-                                icon={<RocketOutlined />}
+                                icon={<BarChartOutlined />}
                                 loading={optimizing}
+                                disabled={generatingDraft}
                                 onClick={runOptimization}
                                 style={{ borderRadius: '8px' }}
                             >
-                                {optimizing ? 'Génération en cours...' : 'Générer l\'EDT Institutional'}
+                                {optimizing ? 'Optimisation...' : 'Optimiser (Deep Search)'}
                             </Button>
                         </Col>
                     </Row>
