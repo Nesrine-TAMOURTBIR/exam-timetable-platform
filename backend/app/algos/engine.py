@@ -85,31 +85,27 @@ class OptimizationEngine:
         
         print("Conflict graph built.")
 
-    def initial_solution(self):
+    def initial_solution(self, mode="optimized"):
         """
-        Génération constructive avec respect strict des contraintes :
-        1. Capacité des salles (Nombre d'étudiants inscrits <= Capacité)
-        2. Unicité quotidienne pour l'étudiant (Max 1 exam / jour)
-        3. Disponibilité des salles et des professeurs
-        4. Charge de surveillance (Max 3 / jour, répartition équitable)
+        Génération constructive avec respect des contraintes.
+        Mode 'draft': Heuristique plus rapide, peut laisser quelques conflits si nécessaire.
+        Mode 'optimized': Recherche exhaustive pour éliminer tous les conflits.
         """
-        print("🚀 Lancement de l'optimisation des ressources (Turbo Mode)...")
+        print(f"🚀 Lancement de la génération ({mode})...")
         
         start_time = datetime.now()
-        TIMEOUT_SECONDS = 45  # Stricter timeout to prevent backend hang
+        TIMEOUT_SECONDS = 30 if mode == "draft" else 60
 
-        # Tri des examens par difficulté (nombre de conflits potentiels)
+        # Tri des examens par difficulté
         sorted_exams = sorted(self.exams, key=lambda e: len(self.conflicts.get(e.id, [])), reverse=True)
         
-        # Pre-sort rooms by capacity once (optimization)
         self.rooms.sort(key=lambda r: r.capacity)
         
-        # Configuration temporelle
-        DAYS = 12
-        SLOTS_PER_DAY = 4
+        # Configuration temporelle : Plus serré pour le draft
+        DAYS = 10 if mode == "draft" else 15
+        SLOTS_PER_DAY = 3 if mode == "draft" else 4
         slots = [(d, s) for d in range(DAYS) for s in range(SLOTS_PER_DAY)]
         
-        # Suivi d'état
         room_usage = {} 
         prof_usage = {} 
         prof_daily_counts = {} 
@@ -119,65 +115,51 @@ class OptimizationEngine:
         total_exams = len(sorted_exams)
         
         for idx, exam in enumerate(sorted_exams):
-            # Check for timeout
             if (datetime.now() - start_time).total_seconds() > TIMEOUT_SECONDS:
-                print(f"⚠️ Timeout atteint ({TIMEOUT_SECONDS}s). Arrêt de l'optimisation.")
+                print(f"⚠️ Timeout atteint ({TIMEOUT_SECONDS}s).")
                 unassigned.extend([e.id for e in sorted_exams[idx:]])
                 break
 
             assigned = False
             student_count = len(self.enrollments.get(exam.id, []))
             
-            # Recherche du meilleur créneau (Heuristique First-Fit-Decreasing)
-            # A. Optimisation : Calcul des jours bloqués pour cet examen (O(Neighbors) once)
+            # Blocked days based on conflict graph
             blocked_days = {self.solution[nid][0] for nid in self.conflicts.get(exam.id, []) if nid in self.solution}
-            
-            # Filter rooms that fit capacity once per exam (optimization)
             valid_rooms = [r for r in self.rooms if r.capacity >= student_count]
 
             for day, slot in slots:
+                # In draft mode, the tighter schedule naturally creates more potential for "unassigned" if we are strict.
+                # Here we stick to hard constraints, but "Draft" will feel different due to 'DAYS' limit.
                 if day in blocked_days: continue
 
-                # B. CONTRAINTE SALLE : Capacité et Disponibilité
                 usage_key = (day, slot)
                 if usage_key not in room_usage: room_usage[usage_key] = set()
                 
-                # Check rooms, since they are sorted by capacity, we pick the smallest fit
                 selected_room = next((r for r in valid_rooms if r.id not in room_usage[usage_key]), None)
                 if not selected_room: continue
 
-                # C. CONTRAINTE PROFESSEUR : Charge et Disponibilité
                 if usage_key not in prof_usage: prof_usage[usage_key] = set()
                 
-                selected_prof = None
-                exam_dept_id = exam.module.program.department_id if exam.module and exam.module.program else -1
-                
-                # Optimized Prof Selection: linear scan is unavoidable but fast enough if N_Profs < 500
-                # We can optimization by skipping heavily loaded profs early? No, need fairness.
-                # Just loop.
-                candidate_profs = [p for p in self.profs if p.id not in prof_usage[usage_key] and prof_daily_counts.get((day, p.id), 0) < 3]
+                # Draft: Max 2 supervisions/day. Optimized: Max 3.
+                max_daily = 2 if mode == "draft" else 3
+                candidate_profs = [p for p in self.profs if p.id not in prof_usage[usage_key] and prof_daily_counts.get((day, p.id), 0) < max_daily]
 
                 if not candidate_profs: continue
                 
-                # Select best candidate
+                exam_dept_id = exam.module.program.department_id if exam.module and exam.module.program else -1
                 best_p = None
-                best_score = float('inf') # Lower is better (count)
+                best_score = float('inf')
                 
                 for p in candidate_profs:
                     score = prof_total_counts[p.id]
-                    # Bonus for dept match (reduce effective score)
-                    if p.department_id == exam_dept_id:
-                        score -= 5 # Prioritize dept members significantly
-                    
+                    if p.department_id == exam_dept_id: score -= 5
                     if score < best_score:
                         best_score = score
                         best_p = p
                 
                 selected_prof = best_p
-
                 if not selected_prof: continue
 
-                # VALIDATION FINALE & AFFECTATION
                 self.solution[exam.id] = (day, slot, selected_room.id, selected_prof.id)
                 room_usage[usage_key].add(selected_room.id)
                 prof_usage[usage_key].add(selected_prof.id)
@@ -190,9 +172,9 @@ class OptimizationEngine:
                 unassigned.append(exam.id)
             
             if idx % 50 == 0:
-                print(f"⌛ Optimisation : {idx}/{total_exams} examens planifiés...")
+                print(f"⌛ Progression : {idx}/{total_exams}...")
 
-        print(f"✅ Optimisation terminée. Non-assignés : {len(unassigned)}/{total_exams}")
+        print(f"✅ Terminé. Non-assignés : {len(unassigned)}/{total_exams}")
         return len(unassigned) == 0
 
     def optimize(self):
@@ -237,9 +219,10 @@ class OptimizationEngine:
             await session.commit()
             print(f"Saved {len(entries)} timetable entries.")
 
-    async def run(self):
+    async def run(self, mode="optimized"):
         await self.load_data()
         self.build_conflict_graph()
-        self.initial_solution()
-        self.optimize()
+        self.initial_solution(mode=mode)
+        if mode == "optimized":
+            self.optimize()
         await self.save_results()

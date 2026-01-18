@@ -22,12 +22,8 @@ async def run_draft_generation(
         engine = OptimizationEngine(AsyncSessionLocal)
         start_time = time.time()
         
-        # Run only the constructive heuristic steps
-        await engine.load_data()
-        engine.build_conflict_graph()
-        success = engine.initial_solution() # This saves if we modify run() logic or call save explicitly
-        if success:
-             await engine.save_results()
+        # Run in draft mode (faster, fewer slots)
+        await engine.run(mode="draft")
         
         end_time = time.time()
         
@@ -55,7 +51,7 @@ async def run_optimization(
         engine = OptimizationEngine(AsyncSessionLocal)
         
         start_time = time.time()
-        await engine.run()
+        await engine.run(mode="optimized")
         end_time = time.time()
         
         # Calculate stats

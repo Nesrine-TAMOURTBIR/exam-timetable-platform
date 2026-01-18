@@ -103,10 +103,16 @@ body {
   left: 0;
   top: 0;
   bottom: 0;
-  transition: all 0.2s !important;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1) !important;
   background: rgba(13, 17, 23, 0.98) !important;
   border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
   z-index: 1001 !important;
+}
+
+@media (max-width: 768px) {
+  .sider-mobile-hidden {
+    transform: translateX(-100%) !important;
+  }
 }
 
 .ant-layout-header {
@@ -130,17 +136,22 @@ body {
 .layout-content-offset {
   margin-top: var(--header-height);
   margin-left: var(--sider-width);
-  transition: all 0.2s;
+  transition: all 0.3s cubic-bezier(0.2, 0, 0, 1);
   min-height: calc(100vh - var(--header-height));
+  width: calc(100% - var(--sider-width));
 }
 
 .layout-content-offset.collapsed {
   margin-left: var(--sider-collapsed-width);
+  width: calc(100% - var(--sider-collapsed-width));
 }
 
 @media (max-width: 768px) {
-  .layout-content-offset {
+
+  .layout-content-offset,
+  .layout-content-offset.collapsed {
     margin-left: 0 !important;
+    width: 100% !important;
   }
 }
 
@@ -209,5 +220,23 @@ input:-webkit-autofill:active {
 @media screen and (max-width: 768px) {
   .ant-table-container {
     overflow-x: auto;
+  }
+}
+
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-overlay.active {
+    display: block;
   }
 }

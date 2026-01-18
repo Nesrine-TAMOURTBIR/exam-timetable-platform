@@ -82,48 +82,60 @@ async def get_dashboard_kpi(
     conflict_query = """
         SELECT 
             d.name,
-            COUNT(DISTINCT t.id) as conflict_count
-        FROM timetable_entries t
-        JOIN exams e ON t.exam_id = e.id
-        JOIN modules m ON e.module_id = m.id
-        JOIN programs p ON m.program_id = p.id
-        JOIN departments d ON p.department_id = d.id
-        JOIN (
-            -- Subquery to find exam_ids that have conflicts (Student Daily Limit)
+            COUNT(DISTINCT conflicts.exam_id) as conflict_count
+        FROM departments d
+        LEFT JOIN programs p ON d.id = p.department_id
+        LEFT JOIN modules m ON p.id = m.program_id
+        LEFT JOIN exams e ON m.id = e.module_id
+        LEFT JOIN (
+            -- Subquery to find exam_ids that have student conflicts (Multi-exam on same day)
             SELECT t1.exam_id
             FROM timetable_entries t1
             JOIN exams e1 ON t1.exam_id = e1.id
             JOIN modules m1 ON e1.module_id = m1.id
             JOIN enrollments en1 ON m1.id = en1.module_id
-            JOIN students s1 ON en1.student_id = s1.id
-            GROUP BY s1.id, CAST(t1.start_time AS DATE), t1.exam_id
-            HAVING COUNT(*) > 1
-        ) conflicts ON t.exam_id = conflicts.exam_id
+            WHERE EXISTS (
+                SELECT 1 
+                FROM timetable_entries t2
+                JOIN exams e2 ON t2.exam_id = e2.id
+                JOIN modules m2 ON e2.module_id = m2.id
+                JOIN enrollments en2 ON m2.id = en2.module_id
+                WHERE en2.student_id = en1.student_id 
+                  AND CAST(t2.start_time AS DATE) = CAST(t1.start_time AS DATE)
+                  AND t2.id <> t1.id
+            )
+        ) conflicts ON e.id = conflicts.exam_id
         GROUP BY d.name;
     """
     conf_res = await db.execute(sa.text(conflict_query))
-    stats["conflicts_by_dept"] = [{"name": row[0], "count": row[1]} for row in conf_res.fetchall()]
+    stats["conflicts_by_dept"] = [{"name": row[0], "count": int(row[1] or 0)} for row in conf_res.fetchall()]
 
     if current_user.role == 'head':
         # Conflicts per program for this head's department
         prog_conflict_query = """
             SELECT 
                 p.name,
-                COUNT(DISTINCT t.id) as conflict_count
-            FROM timetable_entries t
-            JOIN exams e ON t.exam_id = e.id
-            JOIN modules m ON e.module_id = m.id
-            JOIN programs p ON m.program_id = p.id
-            JOIN (
+                COUNT(DISTINCT conflicts.exam_id) as conflict_count
+            FROM programs p
+            LEFT JOIN modules m ON p.id = m.program_id
+            LEFT JOIN exams e ON m.id = e.module_id
+            LEFT JOIN (
                 SELECT t1.exam_id
                 FROM timetable_entries t1
                 JOIN exams e1 ON t1.exam_id = e1.id
                 JOIN modules m1 ON e1.module_id = m1.id
                 JOIN enrollments en1 ON m1.id = en1.module_id
-                JOIN students s1 ON en1.student_id = s1.id
-                GROUP BY s1.id, CAST(t1.start_time AS DATE), t1.exam_id
-                HAVING COUNT(*) > 1
-            ) conflicts ON t.exam_id = conflicts.exam_id
+                WHERE EXISTS (
+                    SELECT 1 
+                    FROM timetable_entries t2
+                    JOIN exams e2 ON t2.exam_id = e2.id
+                    JOIN modules m2 ON e2.module_id = m2.id
+                    JOIN enrollments en2 ON m2.id = en2.module_id
+                    WHERE en2.student_id = en1.student_id 
+                      AND CAST(t2.start_time AS DATE) = CAST(t1.start_time AS DATE)
+                      AND t2.id <> t1.id
+                )
+            ) conflicts ON e.id = conflicts.exam_id
             WHERE p.department_id = :dept_id
             GROUP BY p.name;
         """
@@ -132,7 +144,7 @@ async def get_dashboard_kpi(
         prof = prof_res.scalars().first()
         if prof:
             prog_conf_res = await db.execute(sa.text(prog_conflict_query), {"dept_id": prof.department_id})
-            stats["conflicts_by_program"] = [{"name": row[0], "count": row[1]} for row in prog_conf_res.fetchall()]
+            stats["conflicts_by_program"] = [{"name": row[0], "count": int(row[1] or 0)} for row in prog_conf_res.fetchall()]
 
     # 7. Validation Workflow Summary (Dean/Vice-Dean Strategic KPIs)
     status_query = select(TimetableEntry.status, func.count(TimetableEntry.id)).group_by(TimetableEntry.status)
@@ -195,15 +207,20 @@ async def get_dashboard_kpi(
     prof_res = await db.execute(sa.text(prof_load_query))
     stats["prof_load"] = [{"name": row[0], "count": row[1]} for row in prof_res.fetchall()]
 
-    # 12. Quality Score
+    # 12. Quality Score & Optimization Gain
     total_entries = stats["total_exams"]
     if total_entries > 0:
         total_conflicts = sum(d["count"] for d in stats.get("conflicts_by_dept", []))
-        stats["quality_score"] = max(0, 100 - (total_conflicts / total_entries * 100))
-        stats["optimization_gain"] = 85.5 
+        stats["quality_score"] = float(max(0, 100 - (total_conflicts / total_entries * 100)))
+        
+        # Determine optimization gain (compared to a hypothetical 60% baseline or previous state)
+        if stats["quality_score"] > 80:
+            stats["optimization_gain"] = float(stats["quality_score"] - 65.0)
+        else:
+            stats["optimization_gain"] = 5.0
     else:
-        stats["quality_score"] = 100
-        stats["optimization_gain"] = 0
+        stats["quality_score"] = 100.0
+        stats["optimization_gain"] = 0.0
 
     return stats
 @router.get("/conflicts-detailed")

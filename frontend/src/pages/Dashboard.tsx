@@ -108,22 +108,22 @@ const Dashboard: React.FC = () => {
     const renderActionSection = () => {
         if (isAdmin) {
             return (
-                <div style={{ background: '#e6f7ff', padding: '24px', borderRadius: '12px', border: '1px solid #91d5ff', marginBottom: '24px' }}>
-                    <Row align="middle" gutter={24}>
-                        <Col flex="auto">
+                <div style={{ background: '#e6f7ff', padding: '16px 24px', borderRadius: '12px', border: '1px solid #91d5ff', marginBottom: '24px' }}>
+                    <Row align="middle" gutter={[16, 16]}>
+                        <Col xs={24} md={12} lg={16}>
                             <h3 style={{ margin: 0, color: '#0050b3' }}>Outil de Génération Automatique</h3>
                             <p style={{ margin: 0 }}>Générer un nouvel emploi du temps. Commencez par une ébauche rapide, puis optimisez.</p>
                         </Col>
-                        <Col style={{ display: 'flex', gap: '12px' }}>
+                        <Col xs={24} md={12} lg={8} style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
                             <Button
                                 size="large"
                                 icon={<RocketOutlined />}
                                 loading={generatingDraft}
                                 disabled={optimizing}
                                 onClick={runDraft}
-                                style={{ borderRadius: '8px' }}
+                                style={{ borderRadius: '8px', flex: '1 1 auto' }}
                             >
-                                {generatingDraft ? 'Génération...' : 'Générer Ébauche (Rapide)'}
+                                {generatingDraft ? 'Génération...' : 'Générer Ébauche'}
                             </Button>
                             <Button
                                 type="primary"
@@ -132,9 +132,9 @@ const Dashboard: React.FC = () => {
                                 loading={optimizing}
                                 disabled={generatingDraft}
                                 onClick={runOptimization}
-                                style={{ borderRadius: '8px' }}
+                                style={{ borderRadius: '8px', flex: '1 1 auto' }}
                             >
-                                {optimizing ? 'Optimisation...' : 'Optimiser (Deep Search)'}
+                                {optimizing ? 'Optimisation...' : 'Optimiser'}
                             </Button>
                         </Col>
                     </Row>
@@ -189,17 +189,17 @@ const Dashboard: React.FC = () => {
             {isManager && stats && (
                 <>
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-                        <Col span={6}>
+                        <Col xs={24} sm={12} lg={6}>
                             <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                 <Statistic title="Total Étudiants" value={stats.total_students} prefix={<UserOutlined style={{ color: themeColor }} />} />
                             </Card>
                         </Col>
-                        <Col span={6}>
+                        <Col xs={24} sm={12} lg={6}>
                             <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                 <Statistic title="Total Professeurs" value={stats.total_profs} prefix={<UserOutlined style={{ color: themeColor }} />} />
                             </Card>
                         </Col>
-                        <Col span={6}>
+                        <Col xs={24} sm={12} lg={isDean ? 6 : 6}>
                             <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                 <Statistic
                                     title={isDean ? "Taux d'Occupation" : "Examens Planifiés"}
@@ -210,51 +210,68 @@ const Dashboard: React.FC = () => {
                                 />
                             </Card>
                         </Col>
-                        <Col span={isDean ? 4 : 6}>
-                            <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
-                                <Statistic
-                                    title="Qualité"
-                                    value={stats.quality_score}
-                                    suffix="%"
-                                    precision={1}
-                                    valueStyle={{ color: stats.quality_score > 90 ? '#52c41a' : '#faad14' }}
-                                    prefix={<CheckCircleOutlined />}
-                                />
-                            </Card>
-                        </Col>
-                        {isDean && (
-                            <Col span={8}>
-                                <Card bordered={false} hoverable style={{ borderLeft: `4px solid #722ed1`, background: '#f9f0ff' }}>
-                                    <Statistic
-                                        title="Gain de Performance"
-                                        value={stats.optimization_gain}
-                                        suffix="%"
-                                        precision={1}
-                                        valueStyle={{ color: '#722ed1' }}
-                                        prefix={<RocketOutlined />}
-                                    />
-                                    <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Diminution des collisions par rapport au planning brut</div>
-                                </Card>
-                            </Col>
-                        )}
-                        {isAdmin && (
-                            <Col span={6}>
-                                <Card bordered={false} hoverable style={{ borderLeft: `4px solid #fa8c16` }}>
-                                    <Statistic
-                                        title="Gaspillage Salles"
-                                        value={stats.room_waste_pct}
-                                        suffix="%"
-                                        precision={1}
-                                        valueStyle={{ color: stats.room_waste_pct < 20 ? '#52c41a' : '#fa8c16' }}
-                                        prefix={<AreaChartOutlined />}
-                                    />
-                                </Card>
-                            </Col>
+                        {isDean ? (
+                            <>
+                                <Col xs={24} sm={12} lg={6}>
+                                    <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
+                                        <Statistic
+                                            title="Qualité"
+                                            value={stats.quality_score}
+                                            suffix="%"
+                                            precision={1}
+                                            valueStyle={{ color: stats.quality_score > 90 ? '#52c41a' : '#faad14' }}
+                                            prefix={<CheckCircleOutlined />}
+                                        />
+                                    </Card>
+                                </Col>
+                                <Col xs={24} md={24} lg={24}>
+                                    <Card bordered={false} hoverable style={{ borderLeft: `4px solid #722ed1`, background: '#f9f0ff' }}>
+                                        <Statistic
+                                            title="Gain de Performance"
+                                            value={stats.optimization_gain}
+                                            suffix="%"
+                                            precision={1}
+                                            valueStyle={{ color: '#722ed1' }}
+                                            prefix={<RocketOutlined />}
+                                        />
+                                        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Diminution des collisions par rapport au planning brut</div>
+                                    </Card>
+                                </Col>
+                            </>
+                        ) : (
+                            <>
+                                <Col xs={24} sm={12} lg={6}>
+                                    <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
+                                        <Statistic
+                                            title="Qualité"
+                                            value={stats.quality_score}
+                                            suffix="%"
+                                            precision={1}
+                                            valueStyle={{ color: stats.quality_score > 90 ? '#52c41a' : '#faad14' }}
+                                            prefix={<CheckCircleOutlined />}
+                                        />
+                                    </Card>
+                                </Col>
+                                {isAdmin && (
+                                    <Col xs={24} sm={12} lg={6}>
+                                        <Card bordered={false} hoverable style={{ borderLeft: `4px solid #fa8c16` }}>
+                                            <Statistic
+                                                title="Gaspillage Salles"
+                                                value={stats.room_waste_pct}
+                                                suffix="%"
+                                                precision={1}
+                                                valueStyle={{ color: stats.room_waste_pct < 20 ? '#52c41a' : '#fa8c16' }}
+                                                prefix={<AreaChartOutlined />}
+                                            />
+                                        </Card>
+                                    </Col>
+                                )}
+                            </>
                         )}
                     </Row>
 
                     <Row gutter={[16, 16]}>
-                        <Col span={isDean ? 8 : 12}>
+                        <Col xs={24} md={12} lg={isDean ? 8 : 12}>
                             <Card title={<span><BarChartOutlined /> {isHead ? 'Conflits par Formation' : 'Conflits par Département'}</span>} bordered={false} hoverable>
                                 <div style={{ height: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
@@ -269,7 +286,7 @@ const Dashboard: React.FC = () => {
                                 </div>
                             </Card>
                         </Col>
-                        <Col span={isDean ? 8 : 12}>
+                        <Col xs={24} md={12} lg={isDean ? 8 : 12}>
                             <Card title={<span><CheckCircleOutlined /> État des Validations (Doyen)</span>} bordered={false} className="glass-card">
                                 <div style={{ height: 300, minHeight: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
@@ -299,7 +316,7 @@ const Dashboard: React.FC = () => {
                             </Card>
                         </Col>
                         {(isDean || isAdmin) && (
-                            <Col span={isDean ? 8 : 12}>
+                            <Col xs={24} md={24} lg={isDean ? 8 : 12}>
                                 <Card title={<span><PieChartOutlined /> {isDean ? 'Institution-wide Room Usage' : 'Room Occupancy (%)'}</span>} bordered={false}>
                                     <div style={{ height: 300 }}>
                                         <ResponsiveContainer width="100%" height="100%">
@@ -319,7 +336,7 @@ const Dashboard: React.FC = () => {
 
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         {isAdmin && (
-                            <Col span={12}>
+                            <Col xs={24} lg={12}>
                                 <Card title={<span><BarChartOutlined /> Exams per Day</span>} bordered={false}>
                                     <div style={{ height: 300 }}>
                                         <ResponsiveContainer width="100%" height="100%">
@@ -335,7 +352,7 @@ const Dashboard: React.FC = () => {
                                 </Card>
                             </Col>
                         )}
-                        <Col span={isAdmin ? 12 : 24}>
+                        <Col xs={24} lg={isAdmin ? 12 : 24}>
                             <Card title={<span><LineChartOutlined /> Professor Load {isHead ? '(Our Dept)' : '(Top 10 Institutional)'}</span>} bordered={false}>
                                 <div style={{ height: 300, width: '100%' }}>
                                     <ResponsiveContainer width="100%" height="100%">

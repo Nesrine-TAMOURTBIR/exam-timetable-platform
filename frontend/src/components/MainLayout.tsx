@@ -9,12 +9,16 @@ const { Header, Sider, Content } = Layout;
 const MainLayout: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
-    const [collapsed, setCollapsed] = useState(false);
-    const [user, setUser] = useState<any>(null);
     const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+    const [collapsed, setCollapsed] = useState(window.innerWidth < 768);
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
-        const handleResize = () => setIsMobile(window.innerWidth < 768);
+        const handleResize = () => {
+            const mobile = window.innerWidth < 768;
+            setIsMobile(mobile);
+            if (mobile) setCollapsed(true);
+        };
         window.addEventListener('resize', handleResize);
         return () => window.removeEventListener('resize', handleResize);
     }, []);
@@ -86,14 +90,19 @@ const MainLayout: React.FC = () => {
                 <div className="blob blob-2"></div>
             </div>
 
+            <div
+                className={`mobile-overlay ${isMobile && !collapsed ? 'active' : ''}`}
+                onClick={() => setCollapsed(true)}
+            />
+
             <Sider
                 collapsible
                 collapsed={collapsed}
                 onCollapse={setCollapsed}
-                trigger={null} // We'll move the trigger to the top
+                trigger={null}
                 width={260}
                 collapsedWidth={isMobile ? 0 : 80}
-                className="ant-layout-sider"
+                className={`ant-layout-sider ${isMobile && collapsed ? 'sider-mobile-hidden' : ''}`}
             >
                 <div style={{
                     padding: '16px',
@@ -152,10 +161,25 @@ const MainLayout: React.FC = () => {
             <Layout className={`layout-content-offset ${collapsed ? 'collapsed' : ''}`} style={{ background: 'transparent' }}>
                 <Header style={{
                     left: isMobile ? 0 : (collapsed ? '80px' : '260px'),
-                    width: isMobile ? '100%' : `calc(100% - ${collapsed ? '80px' : '260px'})`
+                    width: isMobile ? '100%' : `calc(100% - ${collapsed ? '80px' : '260px'})`,
+                    padding: isMobile ? '8px 16px 0 16px' : '8px 24px 0 24px'
                 }}>
-                    <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 600, color: '#fff' }}>
-                        Portal <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 300 }}>| {user?.role?.replace('_', ' ').toUpperCase()}</span>
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: isMobile ? '12px' : '0'
+                    }}>
+                        {isMobile && (
+                            <Button
+                                type="text"
+                                icon={collapsed ? <MenuOutlined /> : <MenuFoldOutlined />}
+                                onClick={() => setCollapsed(!collapsed)}
+                                style={{ color: '#fff', fontSize: '20px' }}
+                            />
+                        )}
+                        <div style={{ fontSize: isMobile ? '14px' : '16px', fontWeight: 600, color: '#fff' }}>
+                            Portal <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 300 }}>| {user?.role?.replace('_', ' ').toUpperCase()}</span>
+                        </div>
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>

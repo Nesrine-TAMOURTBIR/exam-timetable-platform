@@ -127,17 +127,17 @@ const TimetableView: React.FC = () => {
     return (
         <Space direction="vertical" style={{ width: '100%' }} size="large">
             <Card title="Filters" size="small" className="glass-card">
-                <Space wrap>
+                <Space wrap style={{ width: '100%' }} direction={window.innerWidth < 768 ? 'vertical' : 'horizontal'}>
                     <Select
                         placeholder="Filter by Department"
-                        style={{ width: 200 }}
+                        style={{ width: window.innerWidth < 768 ? '100%' : 200 }}
                         allowClear
                         onChange={setSelectedDept}
                         options={departments.map(d => ({ label: d.name, value: d.id }))}
                     />
                     <Select
                         placeholder="Filter by Program"
-                        style={{ width: 200 }}
+                        style={{ width: window.innerWidth < 768 ? '100%' : 200 }}
                         allowClear
                         onChange={setSelectedProg}
                         options={programs.filter(p => !selectedDept || p.department_id === selectedDept).map(p => ({ label: p.name, value: p.id }))}
