@@ -53,7 +53,7 @@ const Dashboard: React.FC = () => {
             message.success('Ébauche générée avec succès !');
             fetchData();
         } catch (err: any) {
-            message.error('Erreur lors de la génération de l\'ébauche');
+            message.error('Erreur lors de la génération de l\'ébauche: ' + (err.response?.data?.detail || err.message));
         } finally {
             setGeneratingDraft(false);
         }

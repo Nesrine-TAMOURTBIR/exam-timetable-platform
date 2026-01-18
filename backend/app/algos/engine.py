@@ -8,8 +8,8 @@ from app.models.all_models import Student, Exam, Room, Professor, Enrollment, Ti
 from app.db.session import AsyncSessionLocal
 
 class OptimizationEngine:
-    def __init__(self, db_session):
-        self.db = db_session
+    def __init__(self, session_factory):
+        self.session_factory = session_factory
         self.exams: List[Exam] = []
         self.rooms: List[Room] = []
         self.profs: List[Professor] = []
@@ -23,7 +23,7 @@ class OptimizationEngine:
     async def load_data(self):
         """Load all necessary data into memory"""
         print("Loading data for optimization...")
-        async with self.db as session:
+        async with self.session_factory() as session:
             # Load Exams with relationships
             result = await session.execute(
                 select(Exam).options(
@@ -230,7 +230,7 @@ class OptimizationEngine:
             print("No entries to save.")
             return
 
-        async with self.db as session:
+        async with self.session_factory() as session:
             await session.execute(sa.text("TRUNCATE TABLE timetable_entries RESTART IDENTITY CASCADE"))
             stmt = sa.insert(TimetableEntry)
             await session.execute(stmt, entries)

@@ -19,7 +19,7 @@ async def run_draft_generation(
     """
     print(f"Draft Generation triggered by {current_user.email}")
     try:
-        engine = OptimizationEngine(AsyncSessionLocal())
+        engine = OptimizationEngine(AsyncSessionLocal)
         start_time = time.time()
         
         # Run only the constructive heuristic steps
@@ -52,7 +52,7 @@ async def run_optimization(
     print(f"Full Optimization triggered by {current_user.email}")
     
     try:
-        engine = OptimizationEngine(AsyncSessionLocal())
+        engine = OptimizationEngine(AsyncSessionLocal)
         
         start_time = time.time()
         await engine.run()

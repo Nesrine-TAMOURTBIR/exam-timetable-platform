@@ -5,7 +5,7 @@ from app.db.session import AsyncSessionLocal
 
 async def main():
     print("Initializing Optimization Engine...")
-    engine = OptimizationEngine(AsyncSessionLocal())
+    engine = OptimizationEngine(AsyncSessionLocal)
     
     start_time = time.time()
     await engine.load_data()
