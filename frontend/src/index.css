@@ -203,19 +203,32 @@ body {
 /* --- Input Fixes (No White BG) --- */
 .ant-input,
 .ant-input-password,
-.ant-input-affix-wrapper {
+.ant-input-affix-wrapper,
+.ant-select-selector {
   background: rgba(255, 255, 255, 0.04) !important;
   border-color: rgba(255, 255, 255, 0.1) !important;
   color: #fff !important;
 }
 
+/* Force black text if the background is white (e.g. in some default components) */
+.ant-modal-content .ant-input,
+.ant-modal-content .ant-input-password,
+.ant-modal-content .ant-select-selector,
+.ant-modal-content .ant-picker-input>input {
+  color: #000 !important;
+  background: #fff !important;
+  border: 1px solid #d9d9d9 !important;
+}
+
 .ant-input:focus,
 .ant-input-focused,
-.ant-input-affix-wrapper-focused {
+.ant-input-affix-wrapper-focused,
+.ant-modal-content .ant-input:focus {
   background: rgba(255, 255, 255, 0.08) !important;
   border-color: var(--tech-primary) !important;
   box-shadow: 0 0 0 2px var(--tech-glow) !important;
 }
+
 
 /* Chrome/Safari Autofill Fix */
 input:-webkit-autofill,

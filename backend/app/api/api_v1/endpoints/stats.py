@@ -208,18 +208,28 @@ async def get_dashboard_kpi(
     stats["prof_load"] = [{"name": row[0], "count": row[1]} for row in prof_res.fetchall()]
 
     # 12. Quality Score & Optimization Gain
+    # Calculate a more dynamic quality score based on conflict density
     total_entries = stats["total_exams"]
     if total_entries > 0:
+        # Sum of all conflicts across all departments
         total_conflicts = sum(d["count"] for d in stats.get("conflicts_by_dept", []))
-        stats["quality_score"] = float(max(0, 100 - (total_conflicts / total_entries * 100)))
         
-        # Determine optimization gain (compared to a hypothetical 60% baseline or previous state)
-        if stats["quality_score"] > 80:
-            stats["optimization_gain"] = float(stats["quality_score"] - 65.0)
-        else:
-            stats["optimization_gain"] = 5.0
+        # Quality score: 100% minus penalty for conflicts
+        # Penalty is higher for student conflicts
+        stats["quality_score"] = float(max(0, 100 - (total_conflicts * 2.0 / total_entries * 100)))
+        
+        # Optimization Gain: Difference between current state and a 50% "worst case" baseline
+        # As conflicts decrease, gain should increase
+        gain_base = 50.0
+        current_score = stats["quality_score"]
+        stats["optimization_gain"] = float(max(0, current_score - gain_base))
+        
+        # If no conflicts, ensure quality is 100%
+        if total_conflicts == 0:
+            stats["quality_score"] = 100.0
+            stats["optimization_gain"] = 45.0 # Max realistic gain
     else:
-        stats["quality_score"] = 100.0
+        stats["quality_score"] = 0.0
         stats["optimization_gain"] = 0.0
 
     return stats

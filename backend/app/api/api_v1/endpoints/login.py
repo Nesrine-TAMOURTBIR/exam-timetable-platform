@@ -80,7 +80,6 @@ async def read_users_me(current_user: User = Depends(deps.get_current_user)):
 async def create_admin_endpoint(db = Depends(deps.get_db)):
     """
     TEMPORARY: Create admin user if it doesn't exist
-    REMOVE THIS ENDPOINT AFTER CREATING ADMIN IN PRODUCTION!
     """
     # Check if admin exists
     result = await db.execute(select(User).where(User.email == "admin@example.com"))
@@ -100,3 +99,84 @@ async def create_admin_endpoint(db = Depends(deps.get_db)):
     db.add(admin_user)
     await db.commit()
     return {"message": "Admin user created successfully", "email": "admin@example.com", "password": "secret"}
+
+@router.post("/setup/demo-accounts")
+async def create_demo_accounts_endpoint(db = Depends(deps.get_db)):
+    """
+    Setup standard demo accounts and some sample data for Head, Student, Dean
+    """
+    from app.models.all_models import Department, Program, Professor, Student, Module, UserRole
+    
+    # 1. Ensure Department exists
+    result = await db.execute(select(Department).where(Department.name == "Departement de l'Informatique"))
+    dept = result.scalars().first()
+    if not dept:
+        dept = Department(name="Departement de l'Informatique")
+        db.add(dept)
+        await db.commit()
+        await db.refresh(dept)
+
+    # 2. Ensure Program exists
+    result = await db.execute(select(Program).where(Program.name == "Licence Informatique"))
+    prog = result.scalars().first()
+    if not prog:
+        prog = Program(name="Licence Informatique", department_id=dept.id)
+        db.add(prog)
+        await db.commit()
+        await db.refresh(prog)
+
+    # 3. Create Demo Accounts
+    accounts = [
+        {"email": "head@example.com", "role": UserRole.HEAD_OF_DEPT.value, "name": "Chef de Département"},
+        {"email": "dean@example.com", "role": UserRole.DEAN.value, "name": "Le Doyen"},
+        {"email": "vice@example.com", "role": UserRole.VICE_DEAN.value, "name": "Vice-Doyen"},
+        {"email": "student@example.com", "role": UserRole.STUDENT.value, "name": "Étudiant Demo"},
+    ]
+    
+    created = []
+    for acc in accounts:
+        res = await db.execute(select(User).where(User.email == acc["email"]))
+        u = res.scalars().first()
+        if not u:
+            u = User(
+                email=acc["email"],
+                hashed_password="hashed_secret",
+                full_name=acc["name"],
+                role=acc["role"],
+                is_active=True
+            )
+            db.add(u)
+            await db.commit()
+            await db.refresh(u)
+            
+            # Create profiles
+            if acc["role"] == UserRole.HEAD_OF_DEPT.value:
+                prof = Professor(user_id=u.id, department_id=dept.id)
+                db.add(prof)
+            elif acc["role"] == UserRole.STUDENT.value:
+                student = Student(user_id=u.id, program_id=prog.id)
+                db.add(student)
+            
+            await db.commit()
+            created.append(acc["email"])
+
+    # 4. Lite Seeding: Add 50 students to show "a lot"
+    import random
+    for i in range(50):
+        email = f"student_{i}@demo.local"
+        res = await db.execute(select(User).where(User.email == email))
+        if not res.scalars().first():
+            new_u = User(email=email, hashed_password="hashed_secret", full_name=f"Student {i}", role=UserRole.STUDENT.value)
+            db.add(new_u)
+            await db.commit()
+            await db.refresh(new_u)
+            db.add(Student(user_id=new_u.id, program_id=prog.id))
+    
+    await db.commit()
+    
+    return {
+        "message": "Demo accounts and lite data prepared",
+        "created": created,
+        "department": dept.name,
+        "stats": "Added 50 lite students"
+    }

@@ -153,11 +153,30 @@ const Dashboard: React.FC = () => {
                                 {optimizing ? 'Optimisation...' : 'Optimiser'}
                             </Button>
                         </Col>
+                        <Col flex="1 1 200px">
+                            <Button
+                                type="default"
+                                size="large"
+                                onClick={async () => {
+                                    try {
+                                        await api.post('/setup/demo-accounts');
+                                        message.success('Données démo générées !');
+                                        fetchData();
+                                    } catch (err) {
+                                        message.error('Erreur lors de la génération');
+                                    }
+                                }}
+                                style={{ borderRadius: '8px', width: '100%', borderColor: '#1890ff', color: '#1890ff' }}
+                            >
+                                Générer Données Démo
+                            </Button>
+                        </Col>
                     </Row>
                 </div>
             );
         }
         if (isDean) {
+            const allApproved = stats?.validation_status?.FINAL_APPROVED === stats?.total_exams && stats?.total_exams > 0;
             return (
                 <div style={{ background: '#f9f0ff', padding: '24px', borderRadius: '12px', border: '1px solid #d3adf7', marginBottom: '24px' }}>
                     <Row align="middle" gutter={24}>
@@ -170,6 +189,7 @@ const Dashboard: React.FC = () => {
                                 type="primary"
                                 size="large"
                                 icon={<CheckCircleOutlined />}
+                                disabled={allApproved}
                                 onClick={async () => {
                                     try {
                                         await api.post('/workflow/approve-final');
@@ -179,9 +199,9 @@ const Dashboard: React.FC = () => {
                                         message.error('Erreur de validation');
                                     }
                                 }}
-                                style={{ background: '#722ed1', borderColor: '#722ed1', borderRadius: '8px' }}
+                                style={{ background: allApproved ? '#52c41a' : '#722ed1', borderColor: allApproved ? '#52c41a' : '#722ed1', borderRadius: '8px' }}
                             >
-                                Approuver Tout (Final)
+                                {allApproved ? 'Timplate validé' : 'Approuver Tout (Final)'}
                             </Button>
                         </Col>
                     </Row>

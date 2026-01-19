@@ -31,12 +31,12 @@ async def read_timetable(
     ).offset(skip).limit(limit)
     
     if current_user.role == 'student':
-        # Filter: Exams for modules the student is enrolled in
-        # Path: TimetableEntry -> Exam -> Module -> Enrollment -> Student -> User
+        # Show all exams for their program
+        # Path: TimetableEntry -> Exam -> Module -> Program -> Student -> User
         query = query.join(TimetableEntry.exam)\
                      .join(Exam.module)\
-                     .join(Module.enrollments)\
-                     .join(Enrollment.student)\
+                     .join(Module.program)\
+                     .join(Program.students)\
                      .where(Student.user_id == current_user.id)
                      
     elif current_user.role == 'professor':
