@@ -10,9 +10,9 @@ import TimetableView from './TimetableView';
 const Dashboard: React.FC = () => {
     const [optimizing, setOptimizing] = useState(false);
     const [stats, setStats] = useState<any>(null);
-    const [stats, setStats] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [detailedConflicts, setDetailedConflicts] = useState<any[]>([]);
 
     useEffect(() => {
         fetchData();
@@ -20,7 +20,6 @@ const Dashboard: React.FC = () => {
 
     const fetchData = async () => {
         setLoading(true);
-        setError(null);
         try {
             try {
                 const userRes = await api.get('/login/me');
