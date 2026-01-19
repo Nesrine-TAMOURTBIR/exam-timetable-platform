@@ -47,27 +47,43 @@ const Dashboard: React.FC = () => {
     const [generatingDraft, setGeneratingDraft] = useState(false);
 
     const runDraft = async () => {
+        console.log('[DRAFT] Starting draft generation...');
         setGeneratingDraft(true);
         try {
-            await api.post('/optimize/draft');
-            message.success('Ébauche générée avec succès !');
+            console.log('[DRAFT] Making API call to /optimize/draft');
+            const response = await api.post('/optimize/draft');
+            console.log('[DRAFT] API Response:', response.data);
+
+            message.success(`Ébauche générée avec succès ! (${response.data.total_exams} examens en ${response.data.execution_time?.toFixed(2)}s)`);
+            console.log('[DRAFT] Refreshing dashboard data...');
             fetchData();
         } catch (err: any) {
+            console.error('[DRAFT] Error:', err);
+            console.error('[DRAFT] Error response:', err.response?.data);
             message.error('Erreur lors de la génération de l\'ébauche: ' + (err.response?.data?.detail || err.message));
         } finally {
+            console.log('[DRAFT] Draft generation completed');
             setGeneratingDraft(false);
         }
     };
 
     const runOptimization = async () => {
+        console.log('[OPTIMIZE] Starting full optimization...');
         setOptimizing(true);
         try {
-            await api.post('/optimize/run');
-            message.success('Optimisation terminée !');
+            console.log('[OPTIMIZE] Making API call to /optimize/run');
+            const response = await api.post('/optimize/run');
+            console.log('[OPTIMIZE] API Response:', response.data);
+
+            message.success(`Optimisation terminée ! (${response.data.total_exams} examens en ${response.data.execution_time?.toFixed(2)}s)`);
+            console.log('[OPTIMIZE] Refreshing dashboard data...');
             fetchData();
         } catch (err: any) {
+            console.error('[OPTIMIZE] Error:', err);
+            console.error('[OPTIMIZE] Error response:', err.response?.data);
             message.error('Optimization failed: ' + (err.response?.data?.detail || err.message));
         } finally {
+            console.log('[OPTIMIZE] Optimization completed');
             setOptimizing(false);
         }
     };
