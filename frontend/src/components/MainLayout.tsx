@@ -214,7 +214,7 @@ const MainLayout: React.FC = () => {
                 </Header>
 
                 <Content style={{
-                    padding: isMobile ? '16px' : '32px',
+                    padding: isMobile ? '8px' : '32px',
                     minHeight: 'calc(100vh - var(--header-height))',
                     background: 'transparent'
                 }}>

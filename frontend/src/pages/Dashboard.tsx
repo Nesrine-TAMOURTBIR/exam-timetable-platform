@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
     };
 
     return (
-        <div style={{ padding: '0 8px' }}>
+        <div style={{ padding: 0 }}>
             <div style={{ marginBottom: 24 }}>
                 <h2 style={{ margin: 0, fontSize: '24px', color: themeColor }}>Bienvenue, {user?.full_name || 'Utilisateur'}</h2>
                 <span style={{ color: '#8c8c8c', textTransform: 'capitalize', fontWeight: 500 }}>

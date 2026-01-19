@@ -160,6 +160,21 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
+@media (max-width: 768px) {
+  .ant-card {
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-right: none !important;
+    margin-left: -16px;
+    margin-right: -16px;
+    width: calc(100% + 32px) !important;
+  }
+
+  .ant-card-body {
+    padding: 12px !important;
+  }
+}
+
 .ant-card-head {
   border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: var(--text-primary) !important;
@@ -219,7 +234,40 @@ input:-webkit-autofill:active {
 /* Responsive Table */
 @media screen and (max-width: 768px) {
   .ant-table-container {
-    overflow-x: auto;
+    overflow-x: auto !important;
+    display: block;
+    width: 100%;
+  }
+
+  .ant-table {
+    min-width: 600px;
+    /* Force minimum width to trigger scroll */
+  }
+
+  /* Force all Rows to stack vertically if they don't already */
+  .ant-row {
+    flex-direction: column !important;
+  }
+
+  .ant-col {
+    max-width: 100% !important;
+    width: 100% !important;
+    flex: 0 0 100% !important;
+  }
+
+  /* Space wrap behavior for filters */
+  .ant-space {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    width: 100% !important;
+  }
+
+  .ant-space-item {
+    width: 100% !important;
+  }
+
+  .ant-select {
+    width: 100% !important;
   }
 }
 
