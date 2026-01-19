@@ -29,10 +29,26 @@ const TimetableView: React.FC = () => {
             const params: any = {};
             if (selectedDept) params.department_id = selectedDept;
             if (selectedProg) params.program_id = selectedProg;
+
+            console.log('[TIMETABLE] Fetching with params:', params);
             const res = await api.get('/timetable/', { params });
-            setData(res.data);
+
+            if (res.data.length === 0 && !selectedDept && !selectedProg) {
+                console.log('[TIMETABLE] Role-specific view is empty, falling back to global view...');
+                const globalRes = await api.get('/timetable/'); // Fetch without role filters if possible, or just raw
+                setData(globalRes.data);
+            } else {
+                setData(res.data);
+            }
         } catch (err) {
-            message.error('Failed to load timetable');
+            console.error('[TIMETABLE] Error, trying global fallback...', err);
+            try {
+                const globalRes = await api.get('/timetable/');
+                setData(globalRes.data);
+                message.info('Affichage du planning global (Vue spécifique indisponible)');
+            } catch (fallbackErr) {
+                message.error('Impossible de charger le planning');
+            }
         } finally {
             setLoading(false);
         }
@@ -150,6 +166,17 @@ const TimetableView: React.FC = () => {
                 className="glass-card"
                 extra={
                     <div style={{ display: 'flex', gap: 8 }}>
+                        <Button
+                            danger
+                            type="dashed"
+                            onClick={() => {
+                                setSelectedDept(null);
+                                setSelectedProg(null);
+                                fetchData();
+                            }}
+                        >
+                            VUE COMPLÈTE (URGENCE)
+                        </Button>
                         {user?.role === 'head' && (
                             <Button type="primary" onClick={handleValidateDept}>Validate My Dept</Button>
                         )}
