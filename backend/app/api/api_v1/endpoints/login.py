@@ -69,12 +69,20 @@ async def read_users_me(current_user: User = Depends(deps.get_current_user)):
     """
     Get current user profile (role, name, etc)
     """
-    return {
+    resp = {
         "email": current_user.email,
         "full_name": current_user.full_name,
         "role": current_user.role,
         "id": current_user.id
     }
+    
+    # Add profile specific IDs
+    if current_user.role in ['professor', 'head'] and current_user.professor_profile:
+        resp["department_id"] = current_user.professor_profile.department_id
+    elif current_user.role == 'student' and current_user.student_profile:
+        resp["program_id"] = current_user.student_profile.program_id
+        
+    return resp
 
 @router.post("/setup/create-admin")
 async def create_admin_endpoint(db = Depends(deps.get_db)):
@@ -108,10 +116,10 @@ async def create_demo_accounts_endpoint(db = Depends(deps.get_db)):
     from app.models.all_models import Department, Program, Professor, Student, Module, UserRole
     
     # 1. Ensure Department exists
-    result = await db.execute(select(Department).where(Department.name == "Departement de l'Informatique"))
+    result = await db.execute(select(Department).where(Department.name == "Department of Include"))
     dept = result.scalars().first()
     if not dept:
-        dept = Department(name="Departement de l'Informatique")
+        dept = Department(name="Department of Include")
         db.add(dept)
         await db.commit()
         await db.refresh(dept)

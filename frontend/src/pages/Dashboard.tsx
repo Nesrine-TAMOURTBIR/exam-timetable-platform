@@ -190,6 +190,47 @@ const Dashboard: React.FC = () => {
                 </div>
             );
         }
+        if (isHead) {
+            const hasDraft = stats?.validation_status?.DRAFT > 0;
+            const isDeptApproved = !hasDraft && stats?.validation_status?.DEPT_APPROVED > 0;
+
+            return (
+                <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '20px', borderRadius: '12px', marginBottom: '24px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <h4 style={{ color: '#fff', marginBottom: '16px' }}>Actions de Validation (Chef de Département)</h4>
+                    <Row gutter={16}>
+                        <Col flex="1 1 200px">
+                            <Button
+                                type="primary"
+                                size="large"
+                                onClick={async () => {
+                                    if (!user?.department_id) return;
+                                    try {
+                                        await api.post(`/workflow/validate-dept/${user.department_id}`);
+                                        message.success('Département validé !');
+                                        fetchData();
+                                    } catch (err) {
+                                        message.error('Échec de validation');
+                                    }
+                                }}
+                                style={{ background: isDeptApproved ? '#52c41a' : '#1890ff', borderColor: isDeptApproved ? '#52c41a' : '#1890ff', borderRadius: '8px', width: '100%' }}
+                            >
+                                {isDeptApproved ? 'Département Validé' : 'Valider le Département'}
+                            </Button>
+                        </Col>
+                        <Col flex="1 1 200px">
+                            <Button
+                                type="default"
+                                size="large"
+                                style={{ borderRadius: '8px', width: '100%' }}
+                                onClick={() => window.location.href = '/timetable'}
+                            >
+                                Voir Template
+                            </Button>
+                        </Col>
+                    </Row>
+                </div>
+            );
+        }
         return null;
     };
 
@@ -305,7 +346,7 @@ const Dashboard: React.FC = () => {
                             </Card>
                         </Col>
                         <Col xs={24} md={12} lg={isDean ? 8 : 12}>
-                            <Card title={<span><CheckCircleOutlined /> État des Validations (Doyen)</span>} bordered={false} className="glass-card">
+                            <Card title={<span><CheckCircleOutlined /> État des Validations Global</span>} bordered={false} className="glass-card">
                                 <div style={{ height: 300, minHeight: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>

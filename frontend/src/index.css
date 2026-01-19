@@ -212,12 +212,32 @@ body {
 
 /* Force black text if the background is white (e.g. in some default components) */
 .ant-modal-content .ant-input,
+.ant-modal-content .ant-input-number-input,
 .ant-modal-content .ant-input-password,
 .ant-modal-content .ant-select-selector,
+.ant-modal-content .ant-input-affix-wrapper,
 .ant-modal-content .ant-picker-input>input {
   color: #000 !important;
   background: #fff !important;
   border: 1px solid #d9d9d9 !important;
+}
+
+.ant-modal-content .ant-form-item-label>label {
+  color: #000 !important;
+  font-weight: 500 !important;
+}
+
+.ant-modal-content .ant-modal-header .ant-modal-title {
+  color: #000 !important;
+}
+
+.ant-modal-content .ant-modal-close {
+  color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.ant-modal-content .ant-input::placeholder,
+.ant-modal-content .ant-input-number-input::placeholder {
+  color: #8c8c8c !important;
 }
 
 .ant-input:focus,
