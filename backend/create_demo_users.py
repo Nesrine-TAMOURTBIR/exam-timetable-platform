@@ -34,11 +34,11 @@ async def create_demo_users():
                 is_active=True
             )
             session.add(admin)
-            print("✓ Admin created: admin@example.com / secret")
+            print("v Admin created: admin@example.com / secret")
         else:
             admin.full_name = "Directeur des Examens"
             admin.role = UserRole.ADMIN.value
-            print("✓ Admin updated: admin@example.com / secret")
+            print("v Admin updated: admin@example.com / secret")
         await session.commit()
         credentials_list.append(("Directeur Examens", "admin@example.com", "secret"))
         
@@ -58,7 +58,7 @@ async def create_demo_users():
         else:
             dean.full_name = "Doyen de la Faculté"
             dean.role = UserRole.DEAN.value
-            print("✓ Dean updated: dean@example.com / secret")
+            print("v Dean updated: dean@example.com / secret")
         await session.commit()
         credentials_list.append(("Doyen", "dean@example.com", "secret"))
         
@@ -75,9 +75,9 @@ async def create_demo_users():
             )
             session.add(vicedean)
             await session.commit()
-            print("✓ Vice-Dean created: vicedean@example.com / secret")
+            print("v Vice-Dean created: vicedean@example.com / secret")
         else:
-            print("✓ Vice-Dean already exists: vicedean@example.com / secret")
+            print("v Vice-Dean already exists: vicedean@example.com / secret")
         credentials_list.append(("Vice-Dean", "vicedean@example.com", "secret"))
         
         # 3. Head of Department
@@ -105,11 +105,11 @@ async def create_demo_users():
                 )
                 session.add(prof_profile)
                 await session.commit()
-                print(f"✓ Head created and linked to department: head@example.com / secret")
+                print(f"v Head created and linked to department: head@example.com / secret")
             else:
-                print("✓ Head created (no departments yet): head@example.com / secret")
+                print("v Head created (no departments yet): head@example.com / secret")
         else:
-            print("✓ Head already exists: head@example.com / secret")
+            print("v Head already exists: head@example.com / secret")
         credentials_list.append(("Head of Department", "head@example.com", "secret"))
         
         # 4. Demo Professor
@@ -137,11 +137,11 @@ async def create_demo_users():
                 )
                 session.add(prof_profile)
                 await session.commit()
-                print(f"✓ Professor created: prof@example.com / secret")
+                print(f"v Professor created: prof@example.com / secret")
             else:
-                print("✓ Professor created (no departments yet): prof@example.com / secret")
+                print("v Professor created (no departments yet): prof@example.com / secret")
         else:
-            print("✓ Professor already exists: prof@example.com / secret")
+            print("v Professor already exists: prof@example.com / secret")
         credentials_list.append(("Professor", "prof@example.com", "secret"))
         
         # 5. Demo Student
@@ -169,11 +169,11 @@ async def create_demo_users():
                 )
                 session.add(student_profile)
                 await session.commit()
-                print(f"✓ Student created: student@example.com / secret")
+                print(f"v Student created: student@example.com / secret")
             else:
-                print("✓ Student created (no programs yet): student@example.com / secret")
+                print("v Student created (no programs yet): student@example.com / secret")
         else:
-            print("✓ Student already exists: student@example.com / secret")
+            print("v Student already exists: student@example.com / secret")
         credentials_list.append(("Student", "student@example.com", "secret"))
         
         print("\n" + "=" * 60)

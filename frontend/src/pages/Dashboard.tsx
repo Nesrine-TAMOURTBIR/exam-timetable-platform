@@ -9,7 +9,7 @@ import TimetableView from './TimetableView';
 
 const Dashboard: React.FC = () => {
     const [optimizing, setOptimizing] = useState(false);
-    const [stats, setStats] = useState<any>(null);
+    const [dashboardStats, setDashboardStats] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [detailedConflicts, setDetailedConflicts] = useState<any[]>([]);
@@ -39,10 +39,10 @@ const Dashboard: React.FC = () => {
             // Always try to get stats, but don't crash if fails
             try {
                 const statsRes = await api.get('/stats/dashboard-kpi');
-                setStats(statsRes.data);
+                setDashboardStats(statsRes.data);
             } catch (statsErr) {
                 console.warn("KPI Load failed, using hardcoded fallback");
-                setStats({
+                setDashboardStats({
                     total_students: 1051,
                     total_profs: 2002,
                     total_exams: 150,
@@ -124,7 +124,7 @@ const Dashboard: React.FC = () => {
 
     const themeColor = isAdmin ? '#1890ff' : isDean ? '#722ed1' : isHead ? '#13c2c2' : '#52c41a';
 
-    const currentStats = stats || {
+    const currentStats = dashboardStats || {
         total_students: 1051,
         total_profs: 2002,
         total_exams: 0,
@@ -168,7 +168,7 @@ const Dashboard: React.FC = () => {
             );
         }
         if (isDean) {
-            const allApproved = stats?.validation_status?.FINAL_APPROVED === stats?.total_exams && stats?.total_exams > 0;
+            const allApproved = dashboardStats?.validation_status?.FINAL_APPROVED === dashboardStats?.total_exams && dashboardStats?.total_exams > 0;
             return (
                 <div style={{ background: '#f9f0ff', padding: '24px', borderRadius: '12px', border: '1px solid #d3adf7', marginBottom: '24px' }}>
                     <Row align="middle" gutter={24}>
@@ -201,8 +201,8 @@ const Dashboard: React.FC = () => {
             );
         }
         if (isHead) {
-            const hasDraft = stats?.validation_status?.DRAFT > 0;
-            const isDeptApproved = !hasDraft && stats?.validation_status?.DEPT_APPROVED > 0;
+            const hasDraft = dashboardStats?.validation_status?.DRAFT > 0;
+            const isDeptApproved = !hasDraft && dashboardStats?.validation_status?.DEPT_APPROVED > 0;
 
             return (
                 <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '20px', borderRadius: '12px', marginBottom: '24px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
@@ -264,19 +264,19 @@ const Dashboard: React.FC = () => {
                     <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
                         <Col xs={24} sm={12} lg={6}>
                             <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
-                                <Statistic title="Total Étudiants" value={stats.total_students} prefix={<UserOutlined style={{ color: themeColor }} />} />
+                                <Statistic title="Total Étudiants" value={currentStats.total_students} prefix={<UserOutlined style={{ color: themeColor }} />} />
                             </Card>
                         </Col>
                         <Col xs={24} sm={12} lg={6}>
                             <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
-                                <Statistic title="Total Professeurs" value={stats.total_profs} prefix={<UserOutlined style={{ color: themeColor }} />} />
+                                <Statistic title="Total Professeurs" value={currentStats.total_profs} prefix={<UserOutlined style={{ color: themeColor }} />} />
                             </Card>
                         </Col>
                         <Col xs={24} sm={12} lg={isDean ? 6 : 6}>
                             <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                 <Statistic
                                     title={isDean ? "Taux d'Occupation" : "Examens Planifiés"}
-                                    value={isDean ? stats.occupancy_rate : stats.total_exams}
+                                    value={isDean ? currentStats.occupancy_rate : currentStats.total_exams}
                                     suffix={isDean ? "%" : ""}
                                     precision={isDean ? 1 : 0}
                                     prefix={isDean ? <PieChartOutlined style={{ color: themeColor }} /> : <BookOutlined style={{ color: themeColor }} />}
@@ -289,10 +289,10 @@ const Dashboard: React.FC = () => {
                                     <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                         <Statistic
                                             title="Qualité"
-                                            value={stats.quality_score}
+                                            value={currentStats.quality_score}
                                             suffix="%"
                                             precision={1}
-                                            valueStyle={{ color: stats.quality_score > 90 ? '#52c41a' : '#faad14' }}
+                                            valueStyle={{ color: currentStats.quality_score > 90 ? '#52c41a' : '#faad14' }}
                                             prefix={<CheckCircleOutlined />}
                                         />
                                     </Card>
@@ -301,7 +301,7 @@ const Dashboard: React.FC = () => {
                                     <Card bordered={false} hoverable style={{ borderLeft: `4px solid #722ed1`, background: '#f9f0ff' }}>
                                         <Statistic
                                             title="Gain de Performance"
-                                            value={stats.optimization_gain}
+                                            value={currentStats.optimization_gain}
                                             suffix="%"
                                             precision={1}
                                             valueStyle={{ color: '#722ed1' }}
@@ -317,10 +317,10 @@ const Dashboard: React.FC = () => {
                                     <Card bordered={false} hoverable style={{ borderLeft: `4px solid ${themeColor}` }}>
                                         <Statistic
                                             title="Qualité"
-                                            value={stats.quality_score}
+                                            value={currentStats.quality_score}
                                             suffix="%"
                                             precision={1}
-                                            valueStyle={{ color: stats.quality_score > 90 ? '#52c41a' : '#faad14' }}
+                                            valueStyle={{ color: currentStats.quality_score > 90 ? '#52c41a' : '#faad14' }}
                                             prefix={<CheckCircleOutlined />}
                                         />
                                     </Card>
@@ -330,10 +330,10 @@ const Dashboard: React.FC = () => {
                                         <Card bordered={false} hoverable style={{ borderLeft: `4px solid #fa8c16` }}>
                                             <Statistic
                                                 title="Gaspillage Salles"
-                                                value={stats.room_waste_pct}
+                                                value={currentStats.room_waste_pct}
                                                 suffix="%"
                                                 precision={1}
-                                                valueStyle={{ color: stats.room_waste_pct < 20 ? '#52c41a' : '#fa8c16' }}
+                                                valueStyle={{ color: currentStats.room_waste_pct < 20 ? '#52c41a' : '#fa8c16' }}
                                                 prefix={<AreaChartOutlined />}
                                             />
                                         </Card>
@@ -348,7 +348,7 @@ const Dashboard: React.FC = () => {
                             <Card title={<span><BarChartOutlined /> {isHead ? 'Conflits par Formation' : 'Conflits par Département'}</span>} bordered={false} hoverable>
                                 <div style={{ height: 300 }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={isHead ? stats.conflicts_by_program : stats.conflicts_by_dept}>
+                                        <BarChart data={isHead ? currentStats.conflicts_by_program : currentStats.conflicts_by_dept}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis dataKey="name" />
                                             <YAxis />
@@ -366,9 +366,9 @@ const Dashboard: React.FC = () => {
                                         <PieChart>
                                             <Pie
                                                 data={[
-                                                    { name: 'En Brouillon', value: stats.validation_status.DRAFT },
-                                                    { name: 'Validé Dept', value: stats.validation_status.DEPT_APPROVED },
-                                                    { name: 'Validé Final', value: stats.validation_status.FINAL_APPROVED },
+                                                    { name: 'En Brouillon', value: currentStats.validation_status.DRAFT },
+                                                    { name: 'Validé Dept', value: currentStats.validation_status.DEPT_APPROVED },
+                                                    { name: 'Validé Final', value: currentStats.validation_status.FINAL_APPROVED },
                                                 ]}
                                                 cx="50%"
                                                 cy="50%"
@@ -393,7 +393,7 @@ const Dashboard: React.FC = () => {
                                 <Card title={<span><PieChartOutlined /> {isDean ? 'Institution-wide Room Usage' : 'Room Occupancy (%)'}</span>} bordered={false}>
                                     <div style={{ height: 300 }}>
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart layout="vertical" data={stats.room_occupancy}>
+                                            <BarChart layout="vertical" data={currentStats.room_occupancy}>
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis type="number" domain={[0, 100]} />
                                                 <YAxis dataKey="name" type="category" width={80} />
@@ -413,7 +413,7 @@ const Dashboard: React.FC = () => {
                                 <Card title={<span><BarChartOutlined /> Exams per Day</span>} bordered={false}>
                                     <div style={{ height: 300 }}>
                                         <ResponsiveContainer width="100%" height="100%">
-                                            <BarChart data={stats.exams_by_day}>
+                                            <BarChart data={currentStats.exams_by_day}>
                                                 <CartesianGrid strokeDasharray="3 3" />
                                                 <XAxis dataKey="date" />
                                                 <YAxis />
@@ -429,7 +429,7 @@ const Dashboard: React.FC = () => {
                             <Card title={<span><LineChartOutlined /> Professor Load {isHead ? '(Our Dept)' : '(Top 10 Institutional)'}</span>} bordered={false}>
                                 <div style={{ height: 300, width: '100%' }}>
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={stats.prof_load}>
+                                        <BarChart data={currentStats.prof_load}>
                                             <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis dataKey="name" />
                                             <YAxis />
