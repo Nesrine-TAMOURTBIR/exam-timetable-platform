@@ -203,16 +203,20 @@ const Dashboard: React.FC = () => {
                                 type="primary"
                                 size="large"
                                 onClick={async () => {
-                                    if (!user?.department_id) return;
+                                    if (!user?.department_id) {
+                                        message.warning("Votre compte n'est pas lié à un département.");
+                                        return;
+                                    }
                                     try {
                                         await api.post(`/workflow/validate-dept/${user.department_id}`);
-                                        message.success('Département validé !');
+                                        message.success('Département validé avec succès !');
                                         fetchData();
                                     } catch (err) {
                                         message.error('Échec de validation');
                                     }
                                 }}
                                 style={{ background: isDeptApproved ? '#52c41a' : '#1890ff', borderColor: isDeptApproved ? '#52c41a' : '#1890ff', borderRadius: '8px', width: '100%' }}
+                                disabled={isDeptApproved}
                             >
                                 {isDeptApproved ? 'Département Validé' : 'Valider le Département'}
                             </Button>

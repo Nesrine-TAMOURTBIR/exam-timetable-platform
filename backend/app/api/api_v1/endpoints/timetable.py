@@ -52,10 +52,10 @@ async def read_timetable(
                          .join(Program, Module.program_id == Program.id)\
                          .where(Program.department_id == prof.department_id)
         else:
-            # Fallback for demo: if no prof profile, show everything or specific dept??
-            # Let's return empty to be strict, but log it
-            print(f"HOD User {current_user.email} has no professor profile!")
-            return []
+            # Fallback for HOD: if no prof profile, show everything
+            print(f"HOD User {current_user.email} has no professor profile! Falling back to global view.")
+            # No additional where clause means they see all exams
+            pass
 
     # Apply global filters on top
     if department_id:

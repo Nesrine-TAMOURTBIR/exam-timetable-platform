@@ -37,45 +37,44 @@ async def get_dashboard_kpi(
     
     # Department specific logic
     if current_user.role == 'head':
-        # Find the department for this head
-        # Head is a user linked to a Professor profile linked to a Department
-        # Join: Professor -> User
-        query = select(Professor).where(Professor.user_id == current_user.id)
-        result = await db.execute(query)
-        prof_profile = result.scalars().first()
-        
-        if prof_profile and prof_profile.department_id:
-            dept_id = prof_profile.department_id
+        try:
+            # Find the department for this head
+            query = select(Professor).where(Professor.user_id == current_user.id)
+            result = await db.execute(query)
+            prof_profile = result.scalars().first()
             
-            # Filter stats by dept
-            # Students in programs of this dept
-            # Student -> Program -> Department
-            student_count = await db.execute(
-                select(func.count(Student.id))
-                .join(Student.program)
-                .where(Department.id == dept_id)
-            )
-            stats["total_students"] = student_count.scalar()
-            
-            # Profs in this dept
-            prof_count = await db.execute(
-                select(func.count(Professor.id))
-                .where(Professor.department_id == dept_id)
-            )
-            stats["total_profs"] = prof_count.scalar()
-            
-            # Exams for modules in this dept
-            # TimetableEntry -> Exam -> Module -> Program -> Department
-            exam_count = await db.execute(
-                select(func.count(TimetableEntry.id))
-                .join(TimetableEntry.exam)
-                .join(Exam.module)
-                .join(Module.program)
-                .where(Department.id == dept_id)
-            )
-            stats["total_exams"] = exam_count.scalar()
-            
-            stats["scope"] = "Department"
+            if prof_profile and prof_profile.department_id:
+                dept_id = prof_profile.department_id
+                stats["scope"] = "Department"
+                
+                # Filter stats by dept
+                student_count = await db.execute(
+                    select(func.count(Student.id))
+                    .join(Student.program)
+                    .where(Program.department_id == dept_id)
+                )
+                stats["total_students"] = student_count.scalar() or 0
+                
+                prof_count = await db.execute(
+                    select(func.count(Professor.id))
+                    .where(Professor.department_id == dept_id)
+                )
+                stats["total_profs"] = prof_count.scalar() or 0
+                
+                exam_count = await db.execute(
+                    select(func.count(TimetableEntry.id))
+                    .join(TimetableEntry.exam)
+                    .join(Exam.module)
+                    .join(Module.program)
+                    .where(Program.department_id == dept_id)
+                )
+                stats["total_exams"] = exam_count.scalar() or 0
+            else:
+                print(f"HOD {current_user.email} has no department link")
+                stats["scope"] = "Global (No Dept Profile)"
+        except Exception as e:
+            print(f"Error calculating HOD stats: {e}")
+            stats["scope"] = "Global (Fallback)"
     # 4. Conflict Rates (Strategic View for Dean/Head)
     # Conflict is detected if validate_timetable() returns results.
     # For a strategic view, we want conflicts per dept or program.
@@ -147,15 +146,16 @@ async def get_dashboard_kpi(
             stats["conflicts_by_program"] = [{"name": row[0], "count": int(row[1] or 0)} for row in prog_conf_res.fetchall()]
 
     # 7. Validation Workflow Summary (Dean/Vice-Dean Strategic KPIs)
+    stats["validation_status"] = {"DRAFT": 0, "DEPT_APPROVED": 0, "FINAL_APPROVED": 0}
     status_query = select(TimetableEntry.status, func.count(TimetableEntry.id)).group_by(TimetableEntry.status)
     status_res = await db.execute(status_query)
-    stats["validation_status"] = {row[0]: row[1] for row in status_res.all()}
+    for row in status_res.all():
+        if row[0] in stats["validation_status"]:
+            stats["validation_status"][row[0]] = row[1]
+        else:
+            # Handle cases where status might be None or unexpected
+            stats["validation_status"]["DRAFT"] += row[1]
     
-    # Ensure all statuses exist in dict
-    for s in ["DRAFT", "DEPT_APPROVED", "FINAL_APPROVED"]:
-        if s not in stats["validation_status"]:
-            stats["validation_status"][s] = 0
-
     # 8. Room Occupancy & Waste
     occ_query = """
         SELECT 
