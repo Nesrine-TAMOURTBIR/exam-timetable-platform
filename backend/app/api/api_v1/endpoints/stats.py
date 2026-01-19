@@ -25,7 +25,7 @@ async def get_dashboard_kpi(
     }
     
     # Global Stats (Fast counts)
-    total_students = await db.execute(select(func.count(Student.id)))
+    total_students = await db.execute(select(func.count(User.id)).where(User.role == 'student'))
     stats["total_students"] = total_students.scalar()
     
     total_profs = await db.execute(select(func.count(Professor.id)))

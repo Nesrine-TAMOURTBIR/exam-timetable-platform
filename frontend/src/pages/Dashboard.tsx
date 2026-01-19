@@ -153,24 +153,6 @@ const Dashboard: React.FC = () => {
                                 {optimizing ? 'Optimisation...' : 'Optimiser'}
                             </Button>
                         </Col>
-                        <Col flex="1 1 200px">
-                            <Button
-                                type="default"
-                                size="large"
-                                onClick={async () => {
-                                    try {
-                                        await api.post('/setup/demo-accounts');
-                                        message.success('Données démo générées !');
-                                        fetchData();
-                                    } catch (err) {
-                                        message.error('Erreur lors de la génération');
-                                    }
-                                }}
-                                style={{ borderRadius: '8px', width: '100%', borderColor: '#1890ff', color: '#1890ff' }}
-                            >
-                                Générer Données Démo
-                            </Button>
-                        </Col>
                     </Row>
                 </div>
             );

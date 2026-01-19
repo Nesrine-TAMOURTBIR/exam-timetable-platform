@@ -124,24 +124,29 @@ class OptimizationEngine:
             student_count = len(self.enrollments.get(exam.id, []))
             
             # Blocked days based on conflict graph
-            blocked_days = {self.solution[nid][0] for nid in self.conflicts.get(exam.id, []) if nid in self.solution}
+            # Draft mode ignores student conflicts to show a 'raw' starting state
+            if mode == "draft":
+                blocked_days = set() # Allow same-day conflicts
+            else:
+                blocked_days = {self.solution[nid][0] for nid in self.conflicts.get(exam.id, []) if nid in self.solution}
+            
             valid_rooms = [r for r in self.rooms if r.capacity >= student_count]
 
             for day, slot in slots:
-                # In draft mode, the tighter schedule naturally creates more potential for "unassigned" if we are strict.
-                # Here we stick to hard constraints, but "Draft" will feel different due to 'DAYS' limit.
                 if day in blocked_days: continue
 
                 usage_key = (day, slot)
                 if usage_key not in room_usage: room_usage[usage_key] = set()
                 
+                # Room conflict: Never allow two exams in same room/slot
                 selected_room = next((r for r in valid_rooms if r.id not in room_usage[usage_key]), None)
                 if not selected_room: continue
 
                 if usage_key not in prof_usage: prof_usage[usage_key] = set()
                 
-                # Draft: Max 2 supervisions/day. Optimized: Max 3.
-                max_daily = 2 if mode == "draft" else 3
+                # Draft: Max 3 supervisions/day. Optimized: Max 2 (more relaxed load).
+                # Actually let's make it consistent or purposeful
+                max_daily = 4 if mode == "draft" else 2 
                 candidate_profs = [p for p in self.profs if p.id not in prof_usage[usage_key] and prof_daily_counts.get((day, p.id), 0) < max_daily]
 
                 if not candidate_profs: continue
