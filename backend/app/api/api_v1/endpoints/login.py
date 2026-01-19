@@ -22,6 +22,7 @@ async def login_access_token(
     user = result.scalars().first()
     
     if not user:
+         print(f"[AUTH] User not found: {form_data.username}")
          raise HTTPException(status_code=400, detail="Incorrect email or password")
     
     # Check password (in seeding constraints, password was 'hashed_secret' but not actually hashed logic used in verify? 
@@ -38,15 +39,22 @@ async def login_access_token(
     # I will allow simple comparison if verify fails to support the already seeded data.
     
     # Check password with bcrypt or fallback for seeded data
+    print(f"[AUTH] Attempting login for user: {form_data.username}")
+    
     # First try bcrypt verification (faster now with bcrypt__rounds=4)
     valid = security.verify_password(form_data.password, user.hashed_password)
+    print(f"[AUTH] Bcrypt verification result: {valid}")
     
     # Fallback for seeded data (where password is "hashed_secret" string, not actual hash)
     if not valid and user.hashed_password == "hashed_secret" and form_data.password == "secret":
+        print(f"[AUTH] Using fallback verification for seeded data")
         valid = True
     
     if not valid:
+        print(f"[AUTH] Login failed for user: {form_data.username}")
         raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
+    print(f"[AUTH] Login successful for user: {form_data.username}")
 
     access_token_expires = timedelta(minutes=security.ACCESS_TOKEN_EXPIRE_MINUTES)
     return {
