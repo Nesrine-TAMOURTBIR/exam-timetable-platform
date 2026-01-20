@@ -32,9 +32,16 @@ if firebase_url:
     if not firebase_url.startswith("https://"):
         allowed_origins_list.append(f"https://{firebase_url}")
 
-# TEMPORARY: Allow all origins to fix CORS quickly
-# TODO: Restrict to specific origins in production by setting ALLOW_ALL_ORIGINS=false
-allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "true").lower() != "false"
+# Logging Middleware to debug Render requests
+@app.middleware("http")
+async def log_requests(request, call_next):
+    origin = request.headers.get("origin")
+    method = request.method
+    path = request.url.path
+    print(f"[BACKEND DEBUG] Inbound Request: {method} {path} | Origin: {origin}")
+    response = await call_next(request)
+    print(f"[BACKEND DEBUG] Outbound Response Status: {response.status_code}")
+    return response
 
 # FIX: Use Wildcard '*' but DISABLE credentials to be spec-compliant.
 # Since we use Bearer Tokens (Headers) and not Cookies, this is safe and easiest.
