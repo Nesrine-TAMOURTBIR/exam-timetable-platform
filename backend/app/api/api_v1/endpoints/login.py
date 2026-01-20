@@ -69,23 +69,37 @@ async def read_users_me(current_user: User = Depends(deps.get_current_user)):
     """
     Get current user profile (role, name, etc)
     """
-    resp = {
-        "email": current_user.email,
-        "full_name": current_user.full_name,
-        "role": current_user.role,
-        "id": current_user.id
-    }
-    
-    # Add profile specific IDs with safety checks
     try:
-        if current_user.role in ['professor', 'head'] and current_user.professor_profile:
-            resp["department_id"] = getattr(current_user.professor_profile, "department_id", None)
-        elif current_user.role == 'student' and current_user.student_profile:
-            resp["program_id"] = getattr(current_user.student_profile, "program_id", None)
-    except Exception as e:
-        print(f"[ERROR] Failed to load profile details: {e}")
+        resp = {
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "role": current_user.role,
+            "id": current_user.id
+        }
         
-    return resp
+        # Add profile specific IDs with safety checks
+        try:
+            if current_user.role in ['professor', 'head'] and current_user.professor_profile:
+                resp["department_id"] = getattr(current_user.professor_profile, "department_id", None)
+            elif current_user.role == 'student' and current_user.student_profile:
+                resp["program_id"] = getattr(current_user.student_profile, "program_id", None)
+        except Exception as profile_err:
+            print(f"[WARN] Failed to load profile details for user {current_user.id}: {profile_err}")
+            # Continue without profile details - don't fail the request
+            
+        print(f"[AUTH] Returning user profile for: {current_user.email}")
+        return resp
+    except Exception as e:
+        print(f"[ERROR] Critical error in /login/me: {e}")
+        import traceback
+        traceback.print_exc()
+        # Return minimal response instead of crashing
+        return {
+            "email": getattr(current_user, "email", "unknown"),
+            "full_name": getattr(current_user, "full_name", "Unknown"),
+            "role": getattr(current_user, "role", "user"),
+            "id": getattr(current_user, "id", 0)
+        }
 
 @router.post("/setup/create-admin")
 async def create_admin_endpoint(db = Depends(deps.get_db)):
