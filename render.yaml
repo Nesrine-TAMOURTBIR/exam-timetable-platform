@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: exam-platform-backend
+    name: exam-timetable-platform
     env: python
     buildCommand: cd backend && pip install -r requirements.txt
     startCommand: cd backend && alembic upgrade head && python create_demo_users.py && uvicorn app.main:app --host 0.0.0.0 --port $PORT
@@ -13,6 +13,8 @@ services:
         generateValue: true
       - key: ALGORITHM
         value: HS256
+      - key: ALLOW_ALL_ORIGINS
+        value: "true"
     healthCheckPath: /
 
   - type: static
@@ -22,7 +24,7 @@ services:
     publishPath: frontend/dist
     envVars:
       - key: VITE_API_BASE_URL
-        value: https://exam-platform-backend.onrender.com/api/v1
+        value: https://exam-timetable-platform.onrender.com/api/v1
 
 databases:
   - name: exam-platform-db

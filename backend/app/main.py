@@ -40,8 +40,8 @@ allow_all_origins = os.getenv("ALLOW_ALL_ORIGINS", "true").lower() != "false"
 # Since we use Bearer Tokens (Headers) and not Cookies, this is safe and easiest.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], 
-    allow_credentials=False, # Disable credentials to allow wildcard
+    allow_origins=allowed_origins_list if not allow_all_origins else ["*"],
+    allow_credentials=True if not allow_all_origins else False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
