@@ -12,7 +12,7 @@ const Dashboard: React.FC = () => {
     const [stats, setStats] = useState<any>(null);
     const [user, setUser] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [detailedConflicts, setDetailedConflicts] = useState<any[]>([]);
+    const [detailedConflicts] = useState<any[]>([]);
 
     useEffect(() => {
         fetchData();
