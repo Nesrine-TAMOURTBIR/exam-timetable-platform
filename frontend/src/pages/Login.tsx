@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Form, Input, Button, Card, message, Typography } from 'antd';
+import { Form, Input, Button, Card, message, Typography, Modal } from 'antd';
 import { RocketOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
@@ -101,7 +101,28 @@ const Login: React.FC = () => {
                     </Form.Item>
 
                     <div style={{ textAlign: 'center' }}>
-                        <Button type="link" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', letterSpacing: '0.5px' }}>
+                        <Button
+                            type="link"
+                            style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', letterSpacing: '0.5px' }}
+                            onClick={() => {
+                                Modal.info({
+                                    title: 'Identifiants de Test (Mode Démo)',
+                                    width: 400,
+                                    content: (
+                                        <div style={{ marginTop: 16 }}>
+                                            <p><strong>Admin:</strong> admin@example.com / secret</p>
+                                            <p><strong>Chef Dept:</strong> head@example.com / secret</p>
+                                            <p><strong>Professor:</strong> prof@example.com / secret</p>
+                                            <p><strong>Student:</strong> student@example.com / secret</p>
+                                            <div style={{ marginTop: 16, fontSize: '12px', color: '#888' }}>
+                                                Note: Si le login échoue, assurez-vous que le backend est bien déployé et "Live" sur Render.
+                                            </div>
+                                        </div>
+                                    ),
+                                    okText: 'Compris'
+                                });
+                            }}
+                        >
                             SUPPORT TECHNIQUE / IDENTIFIANTS OUBLIÉS
                         </Button>
                     </div>
