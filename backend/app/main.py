@@ -32,6 +32,36 @@ if firebase_url:
     if not firebase_url.startswith("https://"):
         allowed_origins_list.append(f"https://{firebase_url}")
 
+# Global exception handler middleware to ensure CORS headers on all responses
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.responses import JSONResponse
+import traceback
+
+class CatchAllExceptionMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        origin = request.headers.get("origin", "*")
+        try:
+            response = await call_next(request)
+            # Ensure CORS headers are always present
+            if "access-control-allow-origin" not in response.headers:
+                response.headers["Access-Control-Allow-Origin"] = origin if origin else "*"
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS, PATCH"
+                response.headers["Access-Control-Allow-Headers"] = "*"
+            return response
+        except Exception as e:
+            print(f"[BACKEND ERROR] Unhandled exception: {e}")
+            traceback.print_exc()
+            # Return JSON error response with CORS headers
+            return JSONResponse(
+                status_code=500,
+                content={"detail": str(e)},
+                headers={
+                    "Access-Control-Allow-Origin": origin if origin else "*",
+                    "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS, PATCH",
+                    "Access-Control-Allow-Headers": "*",
+                }
+            )
+
 # Logging Middleware to debug Render requests
 @app.middleware("http")
 async def log_requests(request, call_next):
@@ -53,6 +83,9 @@ app.add_middleware(
     allow_headers=["*"],
     expose_headers=["*"],
 )
+
+# Add exception middleware AFTER CORS (middleware order is LIFO, so this runs first)
+app.add_middleware(CatchAllExceptionMiddleware)
 
 app.include_router(api_router, prefix="/api/v1")
 

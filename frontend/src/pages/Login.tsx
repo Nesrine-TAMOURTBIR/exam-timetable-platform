@@ -111,12 +111,12 @@ const Login: React.FC = () => {
                                     content: (
                                         <div style={{ marginTop: 16 }}>
                                             <p><strong>Admin:</strong> admin@example.com / secret</p>
+                                            <p><strong>Doyen:</strong> dean@example.com / secret</p>
+                                            <p><strong>Vicedoyen:</strong> vicedean@example.com / secret</p>
                                             <p><strong>Chef Dept:</strong> head@example.com / secret</p>
                                             <p><strong>Professor:</strong> prof@example.com / secret</p>
                                             <p><strong>Student:</strong> student@example.com / secret</p>
-                                            <div style={{ marginTop: 16, fontSize: '12px', color: '#888' }}>
-                                                Note: Si le login échoue, assurez-vous que le backend est bien déployé et "Live" sur Render.
-                                            </div>
+                                            
                                         </div>
                                     ),
                                     okText: 'Compris'
