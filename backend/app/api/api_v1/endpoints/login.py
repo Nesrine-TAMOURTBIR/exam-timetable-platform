@@ -76,11 +76,14 @@ async def read_users_me(current_user: User = Depends(deps.get_current_user)):
         "id": current_user.id
     }
     
-    # Add profile specific IDs
-    if current_user.role in ['professor', 'head'] and current_user.professor_profile:
-        resp["department_id"] = current_user.professor_profile.department_id
-    elif current_user.role == 'student' and current_user.student_profile:
-        resp["program_id"] = current_user.student_profile.program_id
+    # Add profile specific IDs with safety checks
+    try:
+        if current_user.role in ['professor', 'head'] and current_user.professor_profile:
+            resp["department_id"] = getattr(current_user.professor_profile, "department_id", None)
+        elif current_user.role == 'student' and current_user.student_profile:
+            resp["program_id"] = getattr(current_user.student_profile, "program_id", None)
+    except Exception as e:
+        print(f"[ERROR] Failed to load profile details: {e}")
         
     return resp
 

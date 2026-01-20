@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.api.api_v1.api import api_router
 
-app = FastAPI(title="Exam Optimization Platform")
+app = FastAPI(title="Exam Optimization Platform", redirect_slashes=False)
 
 # CORS (Allow Frontend)
 import os
@@ -49,7 +49,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=False,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=["*"],
     expose_headers=["*"],
 )

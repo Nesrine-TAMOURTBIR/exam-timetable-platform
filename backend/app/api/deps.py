@@ -26,8 +26,12 @@ async def get_current_user(token: str = Depends(reusable_oauth2), db = Depends(g
             detail="Could not validate credentials",
         )
     
-    # Check User
-    result = await db.execute(select(User).where(User.id == int(token_data))) # assuming sub is user_id
+    # Check User with profiles pre-loaded to avoid async lazy loading errors
+    result = await db.execute(
+        select(User)
+        .where(User.id == int(token_data))
+        .options(selectinload(User.student_profile), selectinload(User.professor_profile))
+    )
     user = result.scalars().first()
     
     if not user:
