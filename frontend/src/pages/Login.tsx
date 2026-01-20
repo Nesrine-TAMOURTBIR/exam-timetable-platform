@@ -27,23 +27,6 @@ const Login: React.FC = () => {
         }
     };
 
-    const handleQuickLogin = async (email: string) => {
-        setLoading(true);
-        try {
-            const formData = new FormData();
-            formData.append('username', email);
-            formData.append('password', 'secret');
-            const response = await api.post('/login/access-token', formData);
-            localStorage.setItem('token', response.data.access_token);
-            message.success(`Accès direct : ${email}`);
-            navigate('/');
-        } catch (error) {
-            message.error('Échec de l\'accès direct');
-        } finally {
-            setLoading(false);
-        }
-    };
-
     return (
         <div className="login-page" style={{
             height: '100vh',
@@ -121,42 +104,6 @@ const Login: React.FC = () => {
                         <Button type="link" style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', letterSpacing: '0.5px' }}>
                             SUPPORT TECHNIQUE / IDENTIFIANTS OUBLIÉS
                         </Button>
-                    </div>
-
-                    <div style={{ marginTop: 32, paddingTop: 24, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                        <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: '10px', textAlign: 'center', marginBottom: 16, letterSpacing: '2px' }}>
-                            ACCÈS DIRECT (SÉCURISÉ)
-                        </div>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                            <Button
-                                className="tech-button-ghost"
-                                onClick={() => handleQuickLogin('head@example.com')}
-                                style={{ fontSize: '11px', height: '40px', borderRadius: '20px' }}
-                            >
-                                CHEF DEPT
-                            </Button>
-                            <Button
-                                className="tech-button-ghost"
-                                onClick={() => handleQuickLogin('prof@example.com')}
-                                style={{ fontSize: '11px', height: '40px', borderRadius: '20px' }}
-                            >
-                                PROFESSEUR
-                            </Button>
-                            <Button
-                                className="tech-button-ghost"
-                                onClick={() => handleQuickLogin('student@example.com')}
-                                style={{ fontSize: '11px', height: '40px', borderRadius: '20px' }}
-                            >
-                                ÉTUDIANT
-                            </Button>
-                            <Button
-                                className="tech-button-ghost"
-                                onClick={() => handleQuickLogin('admin@example.com')}
-                                style={{ fontSize: '11px', height: '40px', borderRadius: '20px' }}
-                            >
-                                ADMIN
-                            </Button>
-                        </div>
                     </div>
                 </Form>
             </Card>

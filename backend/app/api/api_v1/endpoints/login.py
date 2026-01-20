@@ -139,7 +139,6 @@ async def create_demo_accounts_endpoint(db = Depends(deps.get_db)):
         {"email": "dean@example.com", "role": UserRole.DEAN.value, "name": "Le Doyen"},
         {"email": "vice@example.com", "role": UserRole.VICE_DEAN.value, "name": "Vice-Doyen"},
         {"email": "student@example.com", "role": UserRole.STUDENT.value, "name": "Étudiant Demo"},
-        {"email": "prof@example.com", "role": UserRole.PROFESSOR.value, "name": "Professeur Demo"},
     ]
     
     created = []
@@ -159,7 +158,7 @@ async def create_demo_accounts_endpoint(db = Depends(deps.get_db)):
             await db.refresh(u)
             
             # Create profiles
-            if acc["role"] == UserRole.HEAD_OF_DEPT.value or acc["role"] == UserRole.PROFESSOR.value:
+            if acc["role"] == UserRole.HEAD_OF_DEPT.value:
                 prof = Professor(user_id=u.id, department_id=dept.id)
                 db.add(prof)
             elif acc["role"] == UserRole.STUDENT.value:

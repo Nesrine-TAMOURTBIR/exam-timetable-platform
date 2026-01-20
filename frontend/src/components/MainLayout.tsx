@@ -57,24 +57,19 @@ const MainLayout: React.FC = () => {
             { key: '/timetable', icon: <CalendarOutlined />, label: 'Calendrier', onClick: () => navigate('/timetable') },
         ];
 
-        if (user.role === 'admin' || user.role === 'head') {
-            const mgmtItems = [];
-            if (user.role === 'admin') {
-                mgmtItems.push({ key: '/manage/departments', label: 'Départements', onClick: () => navigate('/manage/departments') });
-                mgmtItems.push({ key: '/manage/rooms', label: 'Salles', onClick: () => navigate('/manage/rooms') });
-            }
-            mgmtItems.push({ key: '/manage/programs', label: 'Formations', onClick: () => navigate('/manage/programs') });
-            mgmtItems.push({ key: '/manage/modules', label: 'Modules', onClick: () => navigate('/manage/modules') });
-            if (user.role === 'admin') {
-                mgmtItems.push({ key: '/manage/users', label: 'Utilisateurs', onClick: () => navigate('/manage/users') });
-            }
-            mgmtItems.push({ key: '/manage/exams', label: 'Examens', onClick: () => navigate('/manage/exams') });
-
+        if (user.role === 'admin') {
             items.push({
                 key: '/settings-group',
                 icon: <SettingOutlined />,
                 label: 'Gestion',
-                children: mgmtItems
+                children: [
+                    { key: '/manage/departments', label: 'Départements', onClick: () => navigate('/manage/departments') },
+                    { key: '/manage/rooms', label: 'Salles', onClick: () => navigate('/manage/rooms') },
+                    { key: '/manage/programs', label: 'Formations', onClick: () => navigate('/manage/programs') },
+                    { key: '/manage/modules', label: 'Modules', onClick: () => navigate('/manage/modules') },
+                    { key: '/manage/users', label: 'Utilisateurs', onClick: () => navigate('/manage/users') },
+                    { key: '/manage/exams', label: 'Examens', onClick: () => navigate('/manage/exams') },
+                ]
             });
         }
 
